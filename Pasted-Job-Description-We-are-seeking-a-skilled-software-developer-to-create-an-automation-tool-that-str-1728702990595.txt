@@ -1,0 +1,61 @@
+Job Description
+
+We are seeking a skilled software developer to create an automation tool that streamlines the process of preparing and uploading YouTube videos. The tool should handle various tasks automatically, enhancing efficiency and ensuring consistency across our content.
+
+Project Overview:
+
+The goal is to develop software that automates the following tasks:
+
+1. Automatic Title Generation:
+   - Generate catchy and relevant titles that match the video's content.
+
+2. Audio Transcription and Summary:
+   - Transcribe the video's audio.
+   - Create a concise summary to include in the video description.
+
+3. Description Enhancement:
+   - Add a fixed section with links to our social media accounts in every description.
+   - Generate additional relevant text based on the video's content to enrich the description.
+
+4. YouTube Fields Automation:
+   - Automatically fill in all required fields and settings for YouTube video uploads.
+
+5. Playlist Assignment:
+   - Use the transcription to determine the appropriate playlist, based on the speaker's statements at the beginning of the video.
+  
+- Certainty Levels:
+     - If there's **95% certainty**, automatically add the video to the playlist.
+     - If certainty is between **50% and 95%**, prompt the user for confirmation.
+
+6. Hierarchical Numbering System Implementation:
+   - Vertical Main Subjects: Assign main topics with numbers like `#001`, `#002`, etc.
+   - Horizontal Follow-Ups: For continuations or updates, use `#002.1`, `#002.2`, etc.
+   - In-Depth Clarifications: For detailed dives, use `#002.2A`, `#002.2B`, etc.
+   - This system ensures clarity and maintains a timeline for both creators and viewers.
+
+7. Visualization Interface:
+   - Develop a user-friendly interface that visualizes the hierarchical structure of the content.
+   - Refer to this concept image for guidance:
+
+Qualifications:
+
+- Proven experience in software development and automation tools.
+- Proficiency with YouTube API and understanding of YouTube's uploading requirements.
+- Experience with audio transcription technologies.
+- Knowledge of Natural Language Processing (NLP) for content analysis.
+- Ability to implement machine learning algorithms for certainty estimation.
+- Strong skills in user interface (UI) and user experience (UX) design.
+- Excellent problem-solving skills and attention to detail.
+
+Preferred Technologies:
+
+- Programming Languages: Python, JavaScript, or similar.
+- Frameworks: TensorFlow, PyTorch, or other relevant ML frameworks.
+- APIs: YouTube Data API, Google Cloud Speech-to-Text API.
+
+Deliverables:
+
+- A fully functional automation tool meeting all the outlined requirements.
+- Source code with clear documentation and comments uploaded in our Github repo.
+- User manual or guide explaining how to use the tool inside Github.
+- Brief report on how the tool complies with YouTube's policies and guidelines.
