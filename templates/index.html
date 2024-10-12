@@ -35,6 +35,10 @@
             <label for="description-content" class="form-label">Original Description</label>
             <textarea class="form-control" id="description-content" rows="3" required></textarea>
         </div>
+        <div class="mb-3">
+            <label for="video-content" class="form-label">Video Content</label>
+            <textarea class="form-control" id="video-content" rows="3" required></textarea>
+        </div>
         <button type="submit" class="btn btn-primary">Enhance Description</button>
     </form>
     <div id="enhanced-description" class="result-box"></div>
@@ -50,6 +54,7 @@
         <button type="submit" class="btn btn-primary">Assign Playlist</button>
     </form>
     <div id="assigned-playlist" class="result-box"></div>
+    <div id="playlist-certainty" class="result-box mt-2"></div>
 </div>
 
 <div class="form-section">
@@ -71,4 +76,46 @@
     </form>
     <div id="generated-number" class="result-box"></div>
 </div>
+
+<div class="form-section">
+    <h2>Video Upload</h2>
+    <form id="upload-form">
+        <div class="mb-3">
+            <label for="upload-title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="upload-title" required>
+        </div>
+        <div class="mb-3">
+            <label for="upload-description" class="form-label">Description</label>
+            <textarea class="form-control" id="upload-description" rows="3" required></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="upload-tags" class="form-label">Tags (comma-separated)</label>
+            <input type="text" class="form-control" id="upload-tags" required>
+        </div>
+        <div class="mb-3">
+            <label for="upload-category" class="form-label">Category ID</label>
+            <input type="number" class="form-control" id="upload-category" required>
+        </div>
+        <div class="mb-3">
+            <label for="upload-privacy" class="form-label">Privacy Status</label>
+            <select class="form-select" id="upload-privacy" required>
+                <option value="private">Private</option>
+                <option value="unlisted">Unlisted</option>
+                <option value="public">Public</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="upload-file" class="form-label">Video File</label>
+            <input type="file" class="form-control" id="upload-file" accept="video/*" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload Video</button>
+    </form>
+    <div id="upload-result" class="result-box"></div>
+</div>
+
+<div class="form-section">
+    <h2>Content Hierarchy Visualization</h2>
+    <div id="hierarchy-visualization"></div>
+</div>
+
 {% endblock %}

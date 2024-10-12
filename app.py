@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number
+from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video
 
 class Base(DeclarativeBase):
     pass
@@ -41,14 +41,15 @@ def transcribe_route():
 @app.route('/enhance_description', methods=['POST'])
 def enhance_description_route():
     content = request.json['content']
-    enhanced_description = enhance_description(content)
+    video_content = request.json['video_content']
+    enhanced_description = enhance_description(content, video_content)
     return jsonify({"description": enhanced_description})
 
 @app.route('/assign_playlist', methods=['POST'])
 def assign_playlist_route():
     transcription = request.json['transcription']
-    playlist = assign_playlist(transcription)
-    return jsonify({"playlist": playlist})
+    playlist, certainty = assign_playlist(transcription)
+    return jsonify({"playlist": playlist, "certainty": certainty})
 
 @app.route('/generate_number', methods=['POST'])
 def generate_number_route():
@@ -56,6 +57,29 @@ def generate_number_route():
     parent_number = request.json.get('parent_number')
     number = generate_hierarchical_number(video_type, parent_number)
     return jsonify({"number": number})
+
+@app.route('/upload_video', methods=['POST'])
+def upload_video_route():
+    title = request.form['title']
+    description = request.form['description']
+    tags = request.form['tags'].split(',')
+    category_id = request.form['category_id']
+    privacy_status = request.form['privacy_status']
+    video_file = request.files['video']
+    
+    # Save the video file temporarily
+    temp_path = f"temp_{video_file.filename}"
+    video_file.save(temp_path)
+    
+    video_id = upload_video(title, description, tags, category_id, privacy_status, temp_path)
+    
+    # Remove the temporary file
+    os.remove(temp_path)
+    
+    if video_id:
+        return jsonify({"success": True, "video_id": video_id})
+    else:
+        return jsonify({"success": False, "error": "Failed to upload video"})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
