@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">YouTube Video Automation Tool</h1>
+
+<div class="form-section">
+    <h2>Title Generation</h2>
+    <form id="title-form">
+        <div class="mb-3">
+            <label for="title-content" class="form-label">Video Content</label>
+            <textarea class="form-control" id="title-content" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Title</button>
+    </form>
+    <div id="generated-title" class="result-box"></div>
+</div>
+
+<div class="form-section">
+    <h2>Audio Transcription</h2>
+    <form id="transcription-form">
+        <div class="mb-3">
+            <label for="audio-file" class="form-label">Audio File</label>
+            <input type="file" class="form-control" id="audio-file" accept="audio/*" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Transcribe</button>
+    </form>
+    <div id="transcription" class="result-box"></div>
+    <div id="summary" class="result-box mt-2"></div>
+</div>
+
+<div class="form-section">
+    <h2>Description Enhancement</h2>
+    <form id="description-form">
+        <div class="mb-3">
+            <label for="description-content" class="form-label">Original Description</label>
+            <textarea class="form-control" id="description-content" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Enhance Description</button>
+    </form>
+    <div id="enhanced-description" class="result-box"></div>
+</div>
+
+<div class="form-section">
+    <h2>Playlist Assignment</h2>
+    <form id="playlist-form">
+        <div class="mb-3">
+            <label for="playlist-transcription" class="form-label">Transcription</label>
+            <textarea class="form-control" id="playlist-transcription" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Assign Playlist</button>
+    </form>
+    <div id="assigned-playlist" class="result-box"></div>
+</div>
+
+<div class="form-section">
+    <h2>Hierarchical Numbering</h2>
+    <form id="number-form">
+        <div class="mb-3">
+            <label for="video-type" class="form-label">Video Type</label>
+            <select class="form-select" id="video-type" required>
+                <option value="main">Main Subject</option>
+                <option value="follow_up">Follow-Up</option>
+                <option value="clarification">Clarification</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="parent-number" class="form-label">Parent Number (for Follow-Up/Clarification)</label>
+            <input type="text" class="form-control" id="parent-number">
+        </div>
+        <button type="submit" class="btn btn-primary">Generate Number</button>
+    </form>
+    <div id="generated-number" class="result-box"></div>
+</div>
+{% endblock %}
