@@ -9,13 +9,18 @@ document.addEventListener('DOMContentLoaded', function() {
     titleForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const content = document.getElementById('title-content').value;
-        const response = await fetch('/generate_title', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({content: content})
-        });
-        const data = await response.json();
-        document.getElementById('generated-title').textContent = data.title;
+        try {
+            const response = await fetch('/generate_title', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content: content})
+            });
+            const data = await response.json();
+            document.getElementById('generated-title').textContent = data.title;
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('generated-title').textContent = 'Error generating title. Please try again.';
+        }
     });
 
     transcriptionForm.addEventListener('submit', async function(e) {
@@ -120,7 +125,6 @@ function updateHierarchyVisualization(number) {
     visualization.innerHTML = html;
 }
 
-// Add some basic styles for the tree visualization
 const style = document.createElement('style');
 style.textContent = `
     .tree, .tree ul {

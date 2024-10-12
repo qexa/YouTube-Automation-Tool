@@ -67,13 +67,11 @@ def upload_video_route():
     privacy_status = request.form['privacy_status']
     video_file = request.files['video']
     
-    # Save the video file temporarily
     temp_path = f"temp_{video_file.filename}"
     video_file.save(temp_path)
     
     video_id = upload_video(title, description, tags, category_id, privacy_status, temp_path)
     
-    # Remove the temporary file
     os.remove(temp_path)
     
     if video_id:
