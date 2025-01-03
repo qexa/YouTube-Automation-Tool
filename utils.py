@@ -1,6 +1,6 @@
 import nltk
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk.tokenize import word_tokenize, sent_tokenize
 import random
 import speech_recognition as sr
 from pydub import AudioSegment
@@ -9,8 +9,13 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import os
 
-nltk.download('punkt')
-nltk.download('stopwords')
+# Download required NLTK data
+try:
+    nltk.download('punkt', quiet=True)
+    nltk.download('stopwords', quiet=True)
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+except Exception as e:
+    print(f"Error downloading NLTK data: {str(e)}")
 
 def generate_title(content):
     try:
