@@ -222,26 +222,103 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    playlistForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const transcription = document.getElementById('playlist-transcription').value;
-        const response = await fetch('/assign_playlist', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({transcription: transcription})
-        });
-        const data = await response.json();
-        document.getElementById('assigned-playlist').textContent = `Assigned Playlist: ${data.playlist || 'None'}`;
-        document.getElementById('playlist-certainty').textContent = `Certainty: ${data.certainty.toFixed(2)}%`;
+    // Comprehensive Playlist Assignment functionality
+    const analyzePlaylistBtn = document.getElementById('analyze-playlist-content');
+    
+    // Analyze playlist content first
+    analyzePlaylistBtn?.addEventListener('click', async function() {
+        const content = document.getElementById('playlist-content').value;
         
-        if (data.certainty >= 50 && data.certainty < 95) {
-            const confirmAssignment = confirm(`Playlist "${data.playlist}" assigned with ${data.certainty.toFixed(2)}% certainty. Do you want to confirm this assignment?`);
-            if (confirmAssignment) {
-                document.getElementById('assigned-playlist').textContent += " (Confirmed)";
-            } else {
-                document.getElementById('assigned-playlist').textContent = "Playlist assignment rejected";
-            }
+        if (!content.trim()) {
+            showPlaylistError('Please enter content to analyze');
+            return;
         }
+        
+        try {
+            showPlaylistAnalysisLoading(true);
+            hidePlaylistResults();
+            
+            const response = await fetch('/analyze_playlist_content', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content: content})
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showPlaylistAnalysisResults(data.analysis);
+            } else {
+                showPlaylistError(data.error || 'Failed to analyze content');
+            }
+        } catch (error) {
+            showPlaylistError('Network error occurred while analyzing content');
+        } finally {
+            showPlaylistAnalysisLoading(false);
+        }
+    });
+
+    // Playlist form submission with comprehensive analysis
+    playlistForm?.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const content = document.getElementById('playlist-content').value;
+        const language = document.getElementById('playlist-language').value;
+        const enableSeoInsights = document.getElementById('enable-seo-insights').checked;
+        const enableAlternatives = document.getElementById('enable-alternatives').checked;
+        const enableRecommendations = document.getElementById('enable-recommendations').checked;
+        
+        if (!content.trim()) {
+            showPlaylistError('Please enter content for playlist assignment');
+            return;
+        }
+        
+        try {
+            showPlaylistLoading(true);
+            hidePlaylistResults();
+            
+            const response = await fetch('/assign_playlist', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    content: content,
+                    options: {
+                        language: language,
+                        enable_seo_insights: enableSeoInsights,
+                        enable_alternatives: enableAlternatives,
+                        enable_recommendations: enableRecommendations
+                    }
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showPlaylistResults(data.assignment);
+            } else {
+                showPlaylistError(data.error || 'Failed to assign playlist');
+            }
+        } catch (error) {
+            showPlaylistError('Network error occurred while assigning playlist');
+        } finally {
+            showPlaylistLoading(false);
+        }
+    });
+
+    // Export functionality for playlist data
+    document.getElementById('copy-playlist-data')?.addEventListener('click', function() {
+        const playlistData = getPlaylistDataForExport();
+        copyToClipboard(playlistData, 'Playlist data copied to clipboard!');
+    });
+
+    document.getElementById('export-playlist-json')?.addEventListener('click', function() {
+        const playlistData = getPlaylistDataForExport();
+        downloadAsFile(playlistData, 'playlist-assignment.json', 'application/json');
+    });
+
+    document.getElementById('use-playlist-for-upload')?.addEventListener('click', function() {
+        // This would integrate with video upload functionality
+        alert('Playlist data prepared for video upload integration!');
     });
 
     numberForm.addEventListener('submit', async function(e) {

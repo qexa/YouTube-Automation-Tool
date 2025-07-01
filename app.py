@@ -157,9 +157,56 @@ def analyze_content_route():
 
 @app.route('/assign_playlist', methods=['POST'])
 def assign_playlist_route():
-    transcription = request.json['transcription']
-    playlist, certainty = assign_playlist(transcription)
-    return jsonify({"playlist": playlist, "certainty": certainty})
+    """Enhanced playlist assignment endpoint with comprehensive SEO analysis"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'})
+        
+        content = data.get('content', data.get('transcription', ''))
+        options = data.get('options', {})
+        
+        if not content:
+            return jsonify({'error': 'Content is required for playlist assignment'})
+        
+        # Get comprehensive playlist assignment
+        assignment_result = assign_playlist(content, options)
+        
+        if 'error' in assignment_result:
+            return jsonify({'error': assignment_result['error']})
+        
+        return jsonify({
+            'assignment': assignment_result,
+            'success': True
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Error assigning playlist: {str(e)}'})
+
+@app.route('/analyze_playlist_content', methods=['POST'])
+def analyze_playlist_content_route():
+    """Endpoint for content analysis specifically for playlist assignment"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'})
+        
+        content = data.get('content', '')
+        
+        if not content:
+            return jsonify({'error': 'Content is required for analysis'})
+        
+        analysis = analyze_content_for_playlists(content)
+        
+        return jsonify({
+            'analysis': analysis,
+            'success': True
+        })
+        
+    except Exception as e:
+        return jsonify({'error': f'Error analyzing content: {str(e)}'})
 
 @app.route('/generate_number', methods=['POST'])
 def generate_number_route():

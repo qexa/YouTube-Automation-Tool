@@ -529,35 +529,286 @@ def extract_keywords(text):
     """Legacy function for backward compatibility"""
     return extract_advanced_keywords(text, max_keywords=5)
 
-def assign_playlist(transcription):
+def assign_playlist(transcription, options=None):
+    """Enhanced playlist assignment with SEO optimization and content analysis"""
     try:
-        playlists = {
-            "tech": ["technology", "coding", "programming"],
-            "lifestyle": ["fashion", "food", "travel"],
-            "education": ["learn", "study", "school"],
-        }
-
-        transcription_lower = transcription.lower()
-        matches = {}
-        for playlist, keywords in playlists.items():
-            matches[playlist] = sum(keyword in transcription_lower for keyword in keywords)
+        if options is None:
+            options = {}
         
-        total_matches = sum(matches.values())
-        if total_matches == 0:
-            return None, 0
-
-        best_playlist = max(matches, key=matches.get)
-        certainty = (matches[best_playlist] / total_matches) * 100
-
-        if certainty >= 95:
-            return best_playlist, certainty
-        elif 50 <= certainty < 95:
-            return best_playlist, certainty
-        else:
-            return None, certainty
+        # Enhanced playlist categories with SEO considerations
+        playlist_definitions = {
+            "Technology & Programming": {
+                "keywords": ["technology", "coding", "programming", "software", "development", "tech", "computer", "algorithm", "data", "AI", "machine learning", "web", "app", "digital"],
+                "weight": 1.5,
+                "seo_tags": ["tech", "programming", "coding", "software", "development"],
+                "description": "Content focused on technology, programming, and digital innovation"
+            },
+            "Education & Tutorials": {
+                "keywords": ["learn", "tutorial", "guide", "education", "teaching", "lesson", "course", "study", "school", "university", "training", "skill", "knowledge"],
+                "weight": 1.4,
+                "seo_tags": ["education", "tutorial", "learning", "guide", "howto"],
+                "description": "Educational content and step-by-step tutorials"
+            },
+            "Business & Finance": {
+                "keywords": ["business", "finance", "money", "investment", "startup", "entrepreneur", "marketing", "sales", "economics", "profit", "revenue", "strategy"],
+                "weight": 1.3,
+                "seo_tags": ["business", "finance", "money", "investment", "entrepreneur"],
+                "description": "Business insights, financial advice, and entrepreneurship"
+            },
+            "Lifestyle & Personal": {
+                "keywords": ["lifestyle", "personal", "life", "daily", "routine", "habit", "wellness", "health", "fitness", "motivation", "inspiration", "productivity"],
+                "weight": 1.2,
+                "seo_tags": ["lifestyle", "personal", "motivation", "wellness", "productivity"],
+                "description": "Personal development and lifestyle content"
+            },
+            "Entertainment & Media": {
+                "keywords": ["entertainment", "fun", "funny", "comedy", "movie", "music", "game", "gaming", "review", "reaction", "vlog", "story"],
+                "weight": 1.1,
+                "seo_tags": ["entertainment", "fun", "gaming", "review", "vlog"],
+                "description": "Entertainment content and media reviews"
+            },
+            "Science & Research": {
+                "keywords": ["science", "research", "experiment", "study", "analysis", "theory", "discovery", "innovation", "physics", "chemistry", "biology"],
+                "weight": 1.3,
+                "seo_tags": ["science", "research", "experiment", "innovation", "discovery"],
+                "description": "Scientific content and research discussions"
+            },
+            "Creative & Arts": {
+                "keywords": ["creative", "art", "design", "photography", "music", "drawing", "painting", "craft", "DIY", "artistic", "aesthetic"],
+                "weight": 1.2,
+                "seo_tags": ["creative", "art", "design", "DIY", "craft"],
+                "description": "Creative content and artistic expressions"
+            },
+            "Travel & Adventure": {
+                "keywords": ["travel", "adventure", "journey", "explore", "destination", "vacation", "trip", "culture", "country", "city", "experience"],
+                "weight": 1.1,
+                "seo_tags": ["travel", "adventure", "explore", "destination", "culture"],
+                "description": "Travel experiences and adventure content"
+            }
+        }
+        
+        # Analyze content for keywords and topics
+        content_analysis = analyze_content_for_playlists(transcription)
+        transcription_lower = transcription.lower()
+        
+        # Calculate playlist scores with enhanced analysis
+        playlist_scores = {}
+        total_score = 0
+        
+        for playlist_name, playlist_info in playlist_definitions.items():
+            # Basic keyword matching
+            keyword_matches = sum(1 for keyword in playlist_info["keywords"] if keyword in transcription_lower)
+            
+            # Advanced content analysis scoring
+            topic_relevance = calculate_topic_relevance(content_analysis, playlist_info["keywords"])
+            
+            # SEO weight application
+            weighted_score = (keyword_matches + topic_relevance) * playlist_info["weight"]
+            
+            playlist_scores[playlist_name] = {
+                "score": weighted_score,
+                "keyword_matches": keyword_matches,
+                "topic_relevance": topic_relevance,
+                "seo_tags": playlist_info["seo_tags"],
+                "description": playlist_info["description"]
+            }
+            total_score += weighted_score
+        
+        # Determine best playlist with confidence scoring
+        if total_score == 0:
+            return generate_default_playlist_assignment(transcription)
+        
+        best_playlist = max(playlist_scores, key=lambda x: playlist_scores[x]["score"])
+        best_score = playlist_scores[best_playlist]["score"]
+        confidence = min((best_score / total_score) * 100, 99)
+        
+        # Generate comprehensive playlist assignment
+        assignment_result = {
+            "primary_playlist": {
+                "name": best_playlist,
+                "confidence": round(confidence, 1),
+                "score": round(best_score, 2),
+                "seo_tags": playlist_scores[best_playlist]["seo_tags"],
+                "description": playlist_scores[best_playlist]["description"]
+            },
+            "alternative_playlists": [],
+            "content_analysis": content_analysis,
+            "seo_insights": generate_playlist_seo_insights(playlist_scores, best_playlist),
+            "recommendations": generate_playlist_recommendations(playlist_scores, best_playlist, confidence)
+        }
+        
+        # Add alternative playlists
+        sorted_playlists = sorted(playlist_scores.items(), key=lambda x: x[1]["score"], reverse=True)
+        for playlist_name, playlist_data in sorted_playlists[1:4]:  # Top 3 alternatives
+            if playlist_data["score"] > 0:
+                alt_confidence = (playlist_data["score"] / total_score) * 100
+                assignment_result["alternative_playlists"].append({
+                    "name": playlist_name,
+                    "confidence": round(alt_confidence, 1),
+                    "score": round(playlist_data["score"], 2),
+                    "seo_tags": playlist_data["seo_tags"]
+                })
+        
+        return assignment_result
+        
     except Exception as e:
-        print(f"Error assigning playlist: {str(e)}")
-        return None, 0
+        print(f"Error in enhanced playlist assignment: {str(e)}")
+        return generate_error_playlist_assignment(str(e))
+
+def analyze_content_for_playlists(content):
+    """Analyze content specifically for playlist assignment"""
+    try:
+        # Extract keywords and topics
+        keywords = extract_advanced_keywords(content, max_keywords=15)
+        entities = extract_named_entities(content)
+        topics = categorize_content(content)
+        
+        # Calculate content characteristics
+        word_count = len(content.split())
+        complexity_score = calculate_content_complexity(content)
+        
+        return {
+            "keywords": keywords,
+            "entities": entities,
+            "topics": topics,
+            "word_count": word_count,
+            "complexity_score": complexity_score,
+            "primary_topic": topics[0] if topics else "general"
+        }
+    except Exception as e:
+        print(f"Error analyzing content for playlists: {str(e)}")
+        return {"keywords": [], "entities": [], "topics": ["general"], "word_count": 0, "complexity_score": 0, "primary_topic": "general"}
+
+def calculate_topic_relevance(content_analysis, playlist_keywords):
+    """Calculate how relevant content is to playlist keywords"""
+    try:
+        relevance_score = 0
+        content_keywords = content_analysis.get("keywords", [])
+        content_topics = content_analysis.get("topics", [])
+        
+        # Keyword overlap scoring
+        for keyword in content_keywords:
+            if any(playlist_keyword in keyword.lower() or keyword.lower() in playlist_keyword for playlist_keyword in playlist_keywords):
+                relevance_score += 1
+        
+        # Topic alignment scoring
+        for topic in content_topics:
+            if any(playlist_keyword in topic.lower() or topic.lower() in playlist_keyword for playlist_keyword in playlist_keywords):
+                relevance_score += 0.5
+        
+        return relevance_score
+    except Exception as e:
+        print(f"Error calculating topic relevance: {str(e)}")
+        return 0
+
+def calculate_content_complexity(content):
+    """Calculate content complexity score"""
+    try:
+        words = content.split()
+        if not words:
+            return 0
+        
+        avg_word_length = sum(len(word) for word in words) / len(words)
+        sentence_count = len([s for s in content.split('.') if s.strip()])
+        avg_sentence_length = len(words) / max(sentence_count, 1)
+        
+        complexity = (avg_word_length * 0.3) + (avg_sentence_length * 0.7)
+        return min(complexity / 10, 1)  # Normalize to 0-1
+    except Exception as e:
+        print(f"Error calculating content complexity: {str(e)}")
+        return 0
+
+def generate_playlist_seo_insights(playlist_scores, best_playlist):
+    """Generate SEO insights for playlist assignment"""
+    try:
+        insights = []
+        best_data = playlist_scores[best_playlist]
+        
+        # Confidence analysis
+        if best_data["score"] > 5:
+            insights.append("🎯 Strong content alignment with target playlist")
+        elif best_data["score"] > 2:
+            insights.append("📊 Moderate content alignment - consider keyword optimization")
+        else:
+            insights.append("⚠️ Weak content alignment - review playlist targeting")
+        
+        # SEO tag recommendations
+        seo_tags = best_data["seo_tags"]
+        insights.append(f"🏷️ Recommended SEO tags: {', '.join(seo_tags[:3])}")
+        
+        # Content optimization suggestions
+        if best_data["keyword_matches"] < 3:
+            insights.append("💡 Add more relevant keywords to improve playlist targeting")
+        
+        return " • ".join(insights)
+    except Exception as e:
+        print(f"Error generating playlist SEO insights: {str(e)}")
+        return "📈 Basic playlist assignment completed"
+
+def generate_playlist_recommendations(playlist_scores, best_playlist, confidence):
+    """Generate actionable playlist recommendations"""
+    try:
+        recommendations = []
+        
+        if confidence > 80:
+            recommendations.append("✅ Excellent playlist match - proceed with confidence")
+        elif confidence > 60:
+            recommendations.append("📝 Good match - consider adding more specific keywords")
+        else:
+            recommendations.append("🔄 Consider content revision for better playlist alignment")
+        
+        # SEO optimization recommendations
+        best_data = playlist_scores[best_playlist]
+        if len(best_data["seo_tags"]) > 3:
+            recommendations.append(f"🎯 Focus on primary tags: {', '.join(best_data['seo_tags'][:3])}")
+        
+        # Cross-playlist opportunities
+        high_scoring_playlists = [name for name, data in playlist_scores.items() if data["score"] > 1 and name != best_playlist]
+        if len(high_scoring_playlists) > 1:
+            recommendations.append(f"🔗 Consider series spanning: {', '.join(high_scoring_playlists[:2])}")
+        
+        return recommendations
+    except Exception as e:
+        print(f"Error generating playlist recommendations: {str(e)}")
+        return ["📋 Standard playlist assignment completed"]
+
+def generate_default_playlist_assignment(content):
+    """Generate default assignment when no clear match is found"""
+    try:
+        return {
+            "primary_playlist": {
+                "name": "General Content",
+                "confidence": 50.0,
+                "score": 1.0,
+                "seo_tags": ["general", "content", "video"],
+                "description": "General content that doesn't fit specific categories"
+            },
+            "alternative_playlists": [
+                {
+                    "name": "Miscellaneous",
+                    "confidence": 30.0,
+                    "score": 0.6,
+                    "seo_tags": ["misc", "various", "content"]
+                }
+            ],
+            "content_analysis": {"keywords": [], "topics": ["general"], "primary_topic": "general"},
+            "seo_insights": "⚠️ No clear playlist match found - consider adding more specific keywords to improve categorization",
+            "recommendations": ["📝 Add specific topic keywords", "🎯 Define clear content focus", "🔄 Consider content restructuring"]
+        }
+    except Exception as e:
+        print(f"Error generating default playlist assignment: {str(e)}")
+        return {"error": "Could not generate playlist assignment"}
+
+def generate_error_playlist_assignment(error_message):
+    """Generate error response for playlist assignment"""
+    return {
+        "error": f"Playlist assignment failed: {error_message}",
+        "primary_playlist": None,
+        "alternative_playlists": [],
+        "content_analysis": {},
+        "seo_insights": "❌ Unable to analyze content for playlist assignment",
+        "recommendations": ["🔧 Check content format", "📞 Contact support if issue persists"]
+    }
 
 def generate_hierarchical_number(video_type, parent_number=None):
     try:
