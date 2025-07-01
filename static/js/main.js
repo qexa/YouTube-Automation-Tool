@@ -27,15 +27,97 @@ document.addEventListener('DOMContentLoaded', function() {
 
     transcriptionForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        
+        const audioFile = document.getElementById('audio-file').files[0];
+        const language = document.getElementById('transcription-language').value;
+        const autoDetect = document.getElementById('auto-detect-language').checked;
+        
+        if (!audioFile) {
+            showTranscriptionError('Please select an audio file');
+            return;
+        }
+        
+        // Show loading state
+        showTranscriptionLoading(true);
+        hideTranscriptionResults();
+        
         const formData = new FormData();
-        formData.append('audio', document.getElementById('audio-file').files[0]);
-        const response = await fetch('/transcribe', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await response.json();
-        document.getElementById('transcription').textContent = data.transcription;
-        document.getElementById('summary').textContent = data.summary;
+        formData.append('audio', audioFile);
+        formData.append('language', language);
+        formData.append('auto_detect', autoDetect.toString());
+        
+        try {
+            const response = await fetch('/transcribe', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.error) {
+                showTranscriptionError(data.error);
+            } else {
+                showTranscriptionResults(data);
+                showAudioInfo(data.audio_features);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showTranscriptionError('Error during transcription. Please try again.');
+        } finally {
+            showTranscriptionLoading(false);
+        }
+    });
+
+    // Language detection button handler
+    document.getElementById('detect-language-btn').addEventListener('click', async function() {
+        const audioFile = document.getElementById('audio-file').files[0];
+        
+        if (!audioFile) {
+            alert('Please select an audio file first');
+            return;
+        }
+        
+        this.disabled = true;
+        this.textContent = 'Detecting...';
+        
+        const formData = new FormData();
+        formData.append('audio', audioFile);
+        
+        try {
+            const response = await fetch('/detect_language', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.detected_language) {
+                document.getElementById('transcription-language').value = data.detected_language;
+                document.getElementById('auto-detect-language').checked = false;
+            }
+        } catch (error) {
+            console.error('Error detecting language:', error);
+        } finally {
+            this.disabled = false;
+            this.textContent = 'Detect Language';
+        }
+    });
+
+    // Copy and export handlers
+    document.getElementById('copy-transcription').addEventListener('click', function() {
+        const text = document.getElementById('transcription').textContent;
+        copyToClipboard(text, 'Transcription copied to clipboard!');
+    });
+
+    document.getElementById('copy-summary').addEventListener('click', function() {
+        const text = document.getElementById('summary').textContent;
+        copyToClipboard(text, 'Summary copied to clipboard!');
+    });
+
+    document.getElementById('export-transcript').addEventListener('click', function() {
+        const transcription = document.getElementById('transcription').textContent;
+        const summary = document.getElementById('summary').textContent;
+        
+        const content = `TRANSCRIPTION:\n${transcription}\n\nSUMMARY:\n${summary}`;
+        downloadAsFile(content, 'transcription.txt', 'text/plain');
     });
 
     descriptionForm.addEventListener('submit', async function(e) {
@@ -187,6 +269,139 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.removeChild(link);
     });
 });
+
+// Transcription helper functions
+function showTranscriptionLoading(isLoading) {
+    const spinner = document.getElementById('transcription-spinner');
+    const submitBtn = document.querySelector('#transcription-form button[type="submit"]');
+    
+    if (isLoading) {
+        spinner.classList.remove('d-none');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Processing...';
+    } else {
+        spinner.classList.add('d-none');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Transcribe Audio';
+    }
+}
+
+function showTranscriptionResults(data) {
+    const resultsDiv = document.getElementById('transcription-results');
+    const errorDiv = document.getElementById('transcription-error');
+    
+    // Hide error and show results
+    errorDiv.style.display = 'none';
+    resultsDiv.style.display = 'block';
+    
+    // Update content
+    document.getElementById('transcription').textContent = data.transcription;
+    document.getElementById('summary').textContent = data.summary;
+    
+    // Update badges and metadata
+    const confidenceBadge = document.getElementById('confidence-badge');
+    const languageBadge = document.getElementById('language-badge');
+    const wordCount = document.getElementById('word-count');
+    const duration = document.getElementById('transcription-duration');
+    
+    confidenceBadge.textContent = `${Math.round(data.confidence * 100)}% confidence`;
+    languageBadge.textContent = data.detected_language || 'Unknown';
+    wordCount.textContent = data.word_count || 0;
+    duration.textContent = Math.round(data.duration_seconds || 0);
+    
+    // Color code confidence
+    confidenceBadge.className = 'badge';
+    if (data.confidence >= 0.8) {
+        confidenceBadge.classList.add('bg-success');
+    } else if (data.confidence >= 0.6) {
+        confidenceBadge.classList.add('bg-warning');
+    } else {
+        confidenceBadge.classList.add('bg-danger');
+    }
+}
+
+function showTranscriptionError(errorMessage) {
+    const resultsDiv = document.getElementById('transcription-results');
+    const errorDiv = document.getElementById('transcription-error');
+    
+    resultsDiv.style.display = 'none';
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = errorMessage;
+}
+
+function hideTranscriptionResults() {
+    const resultsDiv = document.getElementById('transcription-results');
+    const errorDiv = document.getElementById('transcription-error');
+    
+    resultsDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+}
+
+function showAudioInfo(features) {
+    const audioInfoDiv = document.getElementById('audio-info');
+    
+    if (!features || Object.keys(features).length === 0) {
+        audioInfoDiv.style.display = 'none';
+        return;
+    }
+    
+    audioInfoDiv.style.display = 'block';
+    
+    // Update audio information
+    document.getElementById('audio-duration').textContent = 
+        features.duration_seconds ? `${Math.round(features.duration_seconds)}s` : 'Unknown';
+    document.getElementById('audio-format').textContent = 
+        features.format || 'Unknown';
+    document.getElementById('audio-sample-rate').textContent = 
+        features.sample_rate ? `${features.sample_rate} Hz` : 'Unknown';
+    document.getElementById('audio-channels').textContent = 
+        features.channels || 'Unknown';
+    document.getElementById('audio-size').textContent = 
+        features.file_size_mb ? `${features.file_size_mb.toFixed(1)} MB` : 'Unknown';
+    
+    // Quality assessment
+    const quality = document.getElementById('audio-quality');
+    if (features.sample_rate >= 44100 && features.channels >= 1) {
+        quality.textContent = 'High Quality';
+        quality.className = 'text-success';
+    } else if (features.sample_rate >= 16000) {
+        quality.textContent = 'Good Quality';
+        quality.className = 'text-info';
+    } else {
+        quality.textContent = 'Low Quality';
+        quality.className = 'text-warning';
+    }
+}
+
+function copyToClipboard(text, successMessage) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show temporary success message
+        const originalBtn = event.target;
+        const originalText = originalBtn.textContent;
+        originalBtn.textContent = '✓ Copied!';
+        originalBtn.classList.add('btn-success');
+        
+        setTimeout(() => {
+            originalBtn.textContent = originalText;
+            originalBtn.classList.remove('btn-success');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('Could not copy text: ', err);
+        alert('Failed to copy to clipboard');
+    });
+}
+
+function downloadAsFile(content, filename, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+}
 
 // Thumbnail helper functions
 function showThumbnail(base64Image) {

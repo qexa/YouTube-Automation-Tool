@@ -35,23 +35,186 @@ def generate_title(content):
         print(f"Error generating title: {str(e)}")
         return "Unable to generate title"
 
-def transcribe_audio(audio_file):
+def transcribe_audio(audio_file, language='en-US', enable_confidence=True):
+    """Enhanced audio transcription with confidence scores and language support"""
     try:
+        # Convert audio to appropriate format
         audio = AudioSegment.from_file(audio_file)
-        audio.export("temp.wav", format="wav")
+        
+        # Normalize audio (improve quality)
+        audio = audio.set_frame_rate(16000)
+        audio = audio.set_channels(1)
+        
+        # Export to temporary file
+        temp_file = "temp_audio.wav"
+        audio.export(temp_file, format="wav")
 
         recognizer = sr.Recognizer()
-        with sr.AudioFile("temp.wav") as source:
+        recognizer.energy_threshold = 300
+        recognizer.dynamic_energy_threshold = True
+        recognizer.pause_threshold = 0.8
+        
+        transcription_data = {}
+        
+        with sr.AudioFile(temp_file) as source:
+            # Adjust for ambient noise
+            recognizer.adjust_for_ambient_noise(source, duration=1)
             audio_data = recognizer.record(source)
-            transcription = recognizer.recognize_google(audio_data)
-
-        words = transcription.split()
-        summary = " ".join(words[:100])
-
-        return transcription, summary
+            
+            try:
+                # Primary transcription with Google
+                transcription = recognizer.recognize_google(
+                    audio_data, 
+                    language=language,
+                    show_all=enable_confidence
+                )
+                
+                if enable_confidence and isinstance(transcription, dict):
+                    # Extract best alternative
+                    if 'alternative' in transcription and transcription['alternative']:
+                        best_result = transcription['alternative'][0]
+                        transcription_text = best_result.get('transcript', '')
+                        confidence = best_result.get('confidence', 0.0)
+                    else:
+                        transcription_text = ''
+                        confidence = 0.0
+                else:
+                    transcription_text = transcription if isinstance(transcription, str) else ''
+                    confidence = 0.85  # Default confidence for simple mode
+                
+            except sr.UnknownValueError:
+                transcription_text = ''
+                confidence = 0.0
+            except sr.RequestError as e:
+                print(f"Google Speech Recognition service error: {e}")
+                transcription_text = ''
+                confidence = 0.0
+        
+        # Clean up temp file
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+        
+        if not transcription_text:
+            return "Unable to transcribe audio - no speech detected", "No summary available", 0.0
+        
+        # Generate intelligent summary
+        summary = generate_intelligent_summary(transcription_text)
+        
+        # Extract metadata
+        word_count = len(transcription_text.split())
+        duration_seconds = len(audio) / 1000.0
+        
+        return transcription_text, summary, confidence, word_count, duration_seconds
+        
     except Exception as e:
         print(f"Error transcribing audio: {str(e)}")
-        return "Unable to transcribe audio", "No summary available"
+        return "Unable to transcribe audio", "No summary available", 0.0, 0, 0
+
+def generate_intelligent_summary(text, max_sentences=3):
+    """Generate an intelligent summary using sentence scoring"""
+    try:
+        if not text or len(text.strip()) < 50:
+            return text[:100] + "..." if len(text) > 100 else text
+        
+        # Split into sentences
+        sentences = sent_tokenize(text)
+        
+        if len(sentences) <= max_sentences:
+            return text
+        
+        # Calculate sentence scores
+        words = word_tokenize(text.lower())
+        stop_words = set(stopwords.words('english'))
+        word_freq = {}
+        
+        # Calculate word frequencies
+        for word in words:
+            if word.isalnum() and word not in stop_words:
+                word_freq[word] = word_freq.get(word, 0) + 1
+        
+        # Score sentences
+        sentence_scores = {}
+        for sentence in sentences:
+            sentence_words = word_tokenize(sentence.lower())
+            score = 0
+            word_count = 0
+            
+            for word in sentence_words:
+                if word in word_freq:
+                    score += word_freq[word]
+                    word_count += 1
+            
+            if word_count > 0:
+                sentence_scores[sentence] = score / word_count
+        
+        # Get top sentences
+        top_sentences = sorted(sentence_scores.items(), key=lambda x: x[1], reverse=True)
+        summary_sentences = [sent[0] for sent in top_sentences[:max_sentences]]
+        
+        # Maintain original order
+        ordered_summary = []
+        for sentence in sentences:
+            if sentence in summary_sentences:
+                ordered_summary.append(sentence)
+        
+        return " ".join(ordered_summary)
+        
+    except Exception as e:
+        print(f"Error generating summary: {str(e)}")
+        # Fallback to simple truncation
+        words = text.split()
+        return " ".join(words[:50]) + "..." if len(words) > 50 else text
+
+def detect_language_from_audio(audio_file):
+    """Attempt to detect language from audio content"""
+    try:
+        audio = AudioSegment.from_file(audio_file)
+        temp_file = "temp_lang_detect.wav"
+        audio.export(temp_file, format="wav")
+        
+        recognizer = sr.Recognizer()
+        
+        # Try multiple languages
+        languages = ['en-US', 'es-ES', 'fr-FR', 'de-DE', 'it-IT', 'pt-BR', 'ja-JP', 'ko-KR', 'zh-CN']
+        
+        with sr.AudioFile(temp_file) as source:
+            audio_data = recognizer.record(source)
+            
+            for lang in languages:
+                try:
+                    result = recognizer.recognize_google(audio_data, language=lang)
+                    if result and len(result) > 10:  # Reasonable transcription length
+                        os.remove(temp_file)
+                        return lang
+                except:
+                    continue
+        
+        os.remove(temp_file)
+        return 'en-US'  # Default fallback
+        
+    except Exception as e:
+        print(f"Error detecting language: {str(e)}")
+        return 'en-US'
+
+def extract_audio_features(audio_file):
+    """Extract basic audio features for analysis"""
+    try:
+        audio = AudioSegment.from_file(audio_file)
+        
+        features = {
+            'duration_seconds': len(audio) / 1000.0,
+            'sample_rate': audio.frame_rate,
+            'channels': audio.channels,
+            'format': audio_file.filename.split('.')[-1] if hasattr(audio_file, 'filename') else 'unknown',
+            'file_size_mb': len(audio.raw_data) / (1024 * 1024),
+            'average_loudness': audio.dBFS
+        }
+        
+        return features
+        
+    except Exception as e:
+        print(f"Error extracting audio features: {str(e)}")
+        return {}
 
 def enhance_description(content, video_content):
     try:

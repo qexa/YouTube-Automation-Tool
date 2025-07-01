@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video, extract_video_frame, create_thumbnail_from_frame, create_custom_thumbnail, thumbnail_to_base64
+from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video, extract_video_frame, create_thumbnail_from_frame, create_custom_thumbnail, thumbnail_to_base64, detect_language_from_audio, extract_audio_features
 
 class Base(DeclarativeBase):
     pass
@@ -34,9 +34,58 @@ def generate_title_route():
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_route():
-    audio_file = request.files['audio']
-    transcription, summary = transcribe_audio(audio_file)
-    return jsonify({"transcription": transcription, "summary": summary})
+    try:
+        audio_file = request.files['audio']
+        language = request.form.get('language', 'en-US')
+        auto_detect = request.form.get('auto_detect', 'false').lower() == 'true'
+        
+        # Auto-detect language if requested
+        if auto_detect:
+            detected_language = detect_language_from_audio(audio_file)
+            language = detected_language
+            # Reset file pointer after detection
+            audio_file.seek(0)
+        
+        # Extract audio features
+        features = extract_audio_features(audio_file)
+        audio_file.seek(0)  # Reset file pointer
+        
+        # Transcribe audio with enhanced features
+        result = transcribe_audio(audio_file, language=language)
+        
+        if len(result) == 5:
+            transcription, summary, confidence, word_count, duration = result
+        else:
+            # Fallback for backward compatibility
+            transcription, summary = result[:2]
+            confidence, word_count, duration = 0.0, 0, 0
+        
+        return jsonify({
+            "transcription": transcription,
+            "summary": summary,
+            "confidence": confidence,
+            "word_count": word_count,
+            "duration_seconds": duration,
+            "detected_language": language,
+            "audio_features": features
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "transcription": "Error occurred during transcription",
+            "summary": "No summary available",
+            "error": str(e),
+            "confidence": 0.0
+        })
+
+@app.route('/detect_language', methods=['POST'])
+def detect_language_route():
+    try:
+        audio_file = request.files['audio']
+        detected_language = detect_language_from_audio(audio_file)
+        return jsonify({"detected_language": detected_language})
+    except Exception as e:
+        return jsonify({"error": str(e), "detected_language": "en-US"})
 
 @app.route('/enhance_description', methods=['POST'])
 def enhance_description_route():
