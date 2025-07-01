@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video, extract_video_frame, create_thumbnail_from_frame, create_custom_thumbnail, thumbnail_to_base64, detect_language_from_audio, extract_audio_features
+from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video, extract_video_frame, create_thumbnail_from_frame, create_custom_thumbnail, thumbnail_to_base64, detect_language_from_audio, extract_audio_features, generate_video_tags, suggest_youtube_category, analyze_content_for_tags
 
 class Base(DeclarativeBase):
     pass
@@ -264,10 +264,10 @@ def generate_tags_route():
         }
         
         # Generate tags
-        tag_data = utils.generate_video_tags(content, options)
+        tag_data = generate_video_tags(content, options)
         
         # Get category suggestion
-        category_suggestion = utils.suggest_youtube_category(content, tag_data.get('topics'))
+        category_suggestion = suggest_youtube_category(content, tag_data.get('topics'))
         
         return jsonify({
             'tags': tag_data['tags'],
@@ -296,7 +296,7 @@ def suggest_category_route():
         if not content:
             return jsonify({'error': 'Content is required for category suggestion'})
         
-        category_suggestion = utils.suggest_youtube_category(content)
+        category_suggestion = suggest_youtube_category(content)
         
         return jsonify({
             'category': category_suggestion,
@@ -317,7 +317,7 @@ def analyze_tags_content_route():
         if not content:
             return jsonify({'error': 'Content is required for analysis'})
         
-        analysis = utils.analyze_content_for_tags(content)
+        analysis = analyze_content_for_tags(content)
         
         return jsonify({
             'analysis': analysis,

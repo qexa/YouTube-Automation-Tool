@@ -632,6 +632,106 @@ function showContentAnalysis(data) {
     entitiesDiv.textContent = data.entities.length > 0 ? data.entities.join(', ') : 'None detected';
 }
 
+// Tags and Category Management helper functions
+function showTagsLoading(isLoading) {
+    const spinner = document.getElementById('tags-spinner');
+    const submitBtn = document.querySelector('#tags-form button[type="submit"]');
+    
+    if (isLoading) {
+        spinner.classList.remove('d-none');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Generating Tags...';
+    } else {
+        spinner.classList.add('d-none');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Generate Tags';
+    }
+}
+
+function showTagsResults(data) {
+    const resultsDiv = document.getElementById('tags-results');
+    const errorDiv = document.getElementById('tags-error');
+    
+    // Hide error and show results
+    errorDiv.style.display = 'none';
+    resultsDiv.style.display = 'block';
+    
+    // Update tags display
+    const tagsDiv = document.getElementById('generated-tags');
+    tagsDiv.innerHTML = data.tags.map(tag => 
+        `<span class="badge bg-primary me-1 mb-1">${tag}</span>`
+    ).join('');
+    
+    // Update badges
+    document.getElementById('tags-count-badge').textContent = `${data.tags.length} tags`;
+    document.getElementById('category-badge').textContent = data.category.category_name;
+    
+    // Update metrics
+    document.getElementById('tags-character-count').textContent = data.character_count;
+    document.getElementById('tags-seo-score').textContent = `${data.seo_score}/100`;
+    
+    // Update category recommendation
+    const categoryDiv = document.getElementById('recommended-category');
+    categoryDiv.innerHTML = `
+        <strong>${data.category.category_name}</strong> (ID: ${data.category.category_id})<br>
+        <small class="text-muted">Confidence: ${data.category.confidence} - ${data.category.reason}</small>
+    `;
+    
+    // Update insights
+    document.getElementById('tags-insights').textContent = data.insights;
+}
+
+function showTagsAnalysis(analysis) {
+    const analysisDiv = document.getElementById('tags-analysis');
+    analysisDiv.style.display = 'block';
+    
+    // Update analysis content
+    const topicsDiv = document.getElementById('analysis-topics-tags');
+    const entitiesDiv = document.getElementById('analysis-entities-tags');
+    const scoreDiv = document.getElementById('analysis-score-tags');
+    
+    // Topics as badges
+    topicsDiv.innerHTML = analysis.topics.map(topic => 
+        `<span class="badge bg-info me-1">${topic}</span>`
+    ).join('');
+    
+    // Entities as badges
+    entitiesDiv.innerHTML = analysis.entities.map(entity => 
+        `<span class="badge bg-secondary me-1">${entity}</span>`
+    ).join('');
+    
+    // Quality score
+    const scoreColor = analysis.quality_score >= 80 ? 'success' : 
+                      analysis.quality_score >= 60 ? 'warning' : 'danger';
+    scoreDiv.innerHTML = `
+        <div class="progress">
+            <div class="progress-bar bg-${scoreColor}" style="width: ${analysis.quality_score}%">
+                ${analysis.quality_score}/100
+            </div>
+        </div>
+        <small class="text-muted">${analysis.content_type} content • ${analysis.tag_potential} tag potential</small>
+    `;
+}
+
+function showTagsError(errorMessage) {
+    const resultsDiv = document.getElementById('tags-results');
+    const errorDiv = document.getElementById('tags-error');
+    
+    resultsDiv.style.display = 'none';
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = errorMessage;
+}
+
+function hideTagsResults() {
+    const resultsDiv = document.getElementById('tags-results');
+    const errorDiv = document.getElementById('tags-error');
+    const analysisDiv = document.getElementById('tags-analysis');
+    
+    resultsDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+    analysisDiv.style.display = 'none';
+}
+
 // Transcription helper functions
 function showTranscriptionLoading(isLoading) {
     const spinner = document.getElementById('transcription-spinner');
