@@ -32,6 +32,8 @@ This is a YouTube video automation tool built with Flask that streamlines the pr
 - **Title Generation**: Uses NLTK for natural language processing to extract keywords and generate catchy titles
 - **Audio Transcription**: Advanced speech recognition with multi-language support, confidence scoring, and intelligent summarization
 - **Description Enhancement**: Advanced SEO-optimized description generation with keyword analysis, hashtag generation, and audience targeting
+- **Video Tags Generation**: Intelligent tag generation with content analysis, trending keywords, long-tail optimization, and SEO scoring
+- **Category Management**: YouTube category recommendation based on content analysis with confidence scoring
 - **Playlist Assignment**: Analyzes transcription to determine appropriate playlist with certainty levels
 - **Hierarchical Numbering**: Implements a structured numbering system (#001, #002.1, #002.2A, etc.)
 - **Thumbnail Generation**: Creates custom thumbnails and extracts frames from videos with text overlays
@@ -43,6 +45,9 @@ This is a YouTube video automation tool built with Flask that streamlines the pr
 - `/enhance_description` - POST endpoint for advanced description enhancement with SEO optimization and audience targeting
 - `/analyze_content` - POST endpoint for content analysis including keyword extraction and topic classification
 - `/assign_playlist` - POST endpoint for playlist assignment
+- `/generate_tags` - POST endpoint for intelligent video tag generation with SEO scoring and performance insights
+- `/suggest_category` - POST endpoint for YouTube category recommendation based on content analysis
+- `/analyze_tags_content` - POST endpoint for content analysis specifically for tag generation optimization
 - `/generate_thumbnail_from_video` - POST endpoint for creating thumbnails from video frames
 - `/generate_custom_thumbnail` - POST endpoint for creating custom thumbnails with text overlays
 
@@ -100,6 +105,15 @@ This is a YouTube video automation tool built with Flask that streamlines the pr
 - OAuth credentials stored securely
 
 ## Recent Changes
+
+- **July 01, 2025**: Comprehensive Video Tags and Category Management implementation:
+  - Intelligent tag generation with content analysis, trending keywords, and long-tail optimization
+  - YouTube category recommendation based on content analysis with confidence scoring
+  - Advanced content analysis specifically for tag generation optimization
+  - SEO scoring and performance insights for tag effectiveness
+  - Multi-language support and customizable tag generation options
+  - Professional UI with real-time analysis, copy/export functionality, and upload integration
+  - Tag length optimization and character count management for YouTube compliance
 
 - **July 01, 2025**: Advanced Description Enhancement implementation:
   - SEO-optimized content generation with keyword analysis and topic classification
