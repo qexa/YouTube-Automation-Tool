@@ -98,10 +98,28 @@ This is a YouTube video automation tool built with Flask that streamlines the pr
 - Database URI configurable via environment
 - OAuth credentials stored securely
 
+## Recent Changes
+
+- **July 01, 2025**: Enhanced Audio Transcription and Summary section with advanced features:
+  - Multi-language support (10+ languages including English, Spanish, French, German, etc.)
+  - Automatic language detection from audio content
+  - Confidence scoring for transcription accuracy
+  - Intelligent summarization using sentence scoring algorithms
+  - Audio file analysis (duration, format, quality assessment)
+  - Copy/export functionality for transcriptions and summaries
+  - Professional UI with loading states and error handling
+  - Enhanced API endpoints with detailed metadata
+
+- **July 01, 2025**: Added comprehensive Thumbnail Generator feature:
+  - Custom thumbnail creation with text overlays and background templates
+  - Video frame extraction for thumbnail generation
+  - Multiple template options (gradient, solid, pattern backgrounds)
+  - Download functionality for generated thumbnails
+  - Professional thumbnail sizing (1280x720 YouTube standard)
+
 ## Changelog
 
-Changelog:
-- July 01, 2025. Initial setup
+- July 01, 2025: Initial setup and core features implementation
 
 ## User Preferences
 
