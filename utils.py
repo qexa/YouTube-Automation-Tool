@@ -17,8 +17,10 @@ import base64
 # Download required NLTK data
 try:
     nltk.download('punkt', quiet=True)
+    nltk.download('punkt_tab', quiet=True)
     nltk.download('stopwords', quiet=True)
     nltk.download('averaged_perceptron_tagger', quiet=True)
+    nltk.download('averaged_perceptron_tagger_eng', quiet=True)
 except Exception as e:
     print(f"Error downloading NLTK data: {str(e)}")
 
@@ -216,41 +218,316 @@ def extract_audio_features(audio_file):
         print(f"Error extracting audio features: {str(e)}")
         return {}
 
-def enhance_description(content, video_content):
+def enhance_description(content, video_content, enhancement_options=None):
+    """Enhanced description generation with SEO optimization and structure"""
     try:
-        social_media_links = """
-        Follow us on social media:
-        - Twitter: https://twitter.com/our_channel
-        - Instagram: https://instagram.com/our_channel
-        - Facebook: https://facebook.com/our_channel
-        """
+        if enhancement_options is None:
+            enhancement_options = {
+                'include_seo': True,
+                'include_hashtags': True,
+                'include_timestamps': False,
+                'include_social_links': True,
+                'include_call_to_action': True,
+                'target_audience': 'general',
+                'video_category': 'general'
+            }
         
-        additional_text = generate_additional_text(video_content)
+        enhanced_parts = []
+        enhanced_parts.append(content)
         
-        enhanced_description = f"{content}\n\n{additional_text}\n\n{social_media_links}"
-        return enhanced_description
+        # Extract content insights
+        keywords = extract_advanced_keywords(video_content)
+        entities = extract_named_entities(video_content)
+        topics = categorize_content(video_content)
+        
+        # Add SEO-optimized content
+        if enhancement_options.get('include_seo', True):
+            seo_content = generate_seo_content(keywords, topics, enhancement_options.get('video_category', 'general'))
+            if seo_content:
+                enhanced_parts.append("📚 What You'll Learn:")
+                enhanced_parts.append(seo_content)
+        
+        # Add structured content sections
+        structured_content = generate_structured_content(video_content, keywords, topics)
+        if structured_content:
+            enhanced_parts.append(structured_content)
+        
+        # Add call-to-action
+        if enhancement_options.get('include_call_to_action', True):
+            cta = generate_call_to_action(enhancement_options.get('target_audience', 'general'))
+            enhanced_parts.append(cta)
+        
+        # Add hashtags
+        if enhancement_options.get('include_hashtags', True):
+            hashtags = generate_relevant_hashtags(keywords, topics, enhancement_options.get('video_category', 'general'))
+            if hashtags:
+                enhanced_parts.append(f"🏷️ Tags: {hashtags}")
+        
+        # Add social media links
+        if enhancement_options.get('include_social_links', True):
+            social_links = generate_social_media_section()
+            enhanced_parts.append(social_links)
+        
+        return "\n\n".join(filter(None, enhanced_parts))
+        
     except Exception as e:
         print(f"Error enhancing description: {str(e)}")
         return content
 
-def generate_additional_text(video_content):
+def extract_advanced_keywords(text, max_keywords=10):
+    """Extract keywords using advanced NLP techniques"""
     try:
-        keywords = extract_keywords(video_content)
-        return f"This video covers topics such as: {', '.join(keywords)}. Learn more about these topics in our other videos!"
+        if not text or len(text.strip()) < 10:
+            return []
+        
+        # Tokenize and clean
+        words = word_tokenize(text.lower())
+        stop_words = set(stopwords.words('english'))
+        
+        # Filter meaningful words
+        meaningful_words = []
+        for word in words:
+            if (word.isalnum() and 
+                len(word) > 2 and 
+                word not in stop_words and
+                word.isalpha()):
+                meaningful_words.append(word)
+        
+        # Calculate frequency
+        word_freq = nltk.FreqDist(meaningful_words)
+        
+        # Get top keywords with minimum frequency
+        keywords = []
+        for word, freq in word_freq.most_common(max_keywords * 2):
+            if freq >= 2 or len(keywords) < 5:  # Include high-frequency or ensure minimum keywords
+                keywords.append(word)
+            if len(keywords) >= max_keywords:
+                break
+        
+        return keywords
+        
+    except Exception as e:
+        print(f"Error extracting advanced keywords: {str(e)}")
+        return []
+
+def extract_named_entities(text):
+    """Extract named entities like people, organizations, locations"""
+    try:
+        if not text or len(text.strip()) < 10:
+            return []
+        
+        # Use NLTK's named entity recognition
+        tokens = word_tokenize(text)
+        pos_tags = nltk.pos_tag(tokens)
+        
+        # Extract proper nouns as potential entities
+        entities = []
+        for word, pos in pos_tags:
+            if pos in ['NNP', 'NNPS'] and len(word) > 2:  # Proper nouns
+                entities.append(word)
+        
+        # Remove duplicates and return most common
+        entity_freq = nltk.FreqDist(entities)
+        return [entity for entity, _ in entity_freq.most_common(5)]
+        
+    except Exception as e:
+        print(f"Error extracting named entities: {str(e)}")
+        return []
+
+def categorize_content(text):
+    """Categorize content into topics"""
+    try:
+        if not text:
+            return []
+        
+        text_lower = text.lower()
+        
+        # Define topic categories with keywords
+        topic_keywords = {
+            'technology': ['tech', 'software', 'code', 'programming', 'computer', 'digital', 'app', 'website', 'ai', 'machine learning'],
+            'education': ['learn', 'teach', 'tutorial', 'course', 'lesson', 'study', 'skill', 'training', 'guide', 'how to'],
+            'lifestyle': ['life', 'daily', 'routine', 'health', 'fitness', 'food', 'travel', 'fashion', 'home'],
+            'business': ['business', 'entrepreneur', 'startup', 'marketing', 'sales', 'finance', 'money', 'investment'],
+            'entertainment': ['fun', 'game', 'music', 'movie', 'show', 'comedy', 'entertainment', 'celebrity'],
+            'science': ['science', 'research', 'experiment', 'discovery', 'theory', 'study', 'analysis'],
+            'creative': ['art', 'design', 'creative', 'drawing', 'painting', 'photography', 'craft', 'diy']
+        }
+        
+        topic_scores = {}
+        for topic, keywords in topic_keywords.items():
+            score = sum(1 for keyword in keywords if keyword in text_lower)
+            if score > 0:
+                topic_scores[topic] = score
+        
+        # Return topics sorted by relevance
+        return [topic for topic, _ in sorted(topic_scores.items(), key=lambda x: x[1], reverse=True)[:3]]
+        
+    except Exception as e:
+        print(f"Error categorizing content: {str(e)}")
+        return []
+
+def generate_seo_content(keywords, topics, category):
+    """Generate SEO-optimized content based on keywords and topics"""
+    try:
+        if not keywords and not topics:
+            return ""
+        
+        seo_parts = []
+        
+        # Create topic-based descriptions
+        if topics:
+            primary_topic = topics[0]
+            if primary_topic == 'technology':
+                seo_parts.append("• Master cutting-edge technology concepts and practical applications")
+            elif primary_topic == 'education':
+                seo_parts.append("• Step-by-step learning process with actionable insights")
+            elif primary_topic == 'business':
+                seo_parts.append("• Proven strategies for business growth and success")
+            elif primary_topic == 'lifestyle':
+                seo_parts.append("• Practical tips to improve your daily life and well-being")
+            else:
+                seo_parts.append(f"• Comprehensive insights into {primary_topic} and related concepts")
+        
+        # Add keyword-based content
+        if keywords:
+            key_concepts = keywords[:3]
+            seo_parts.append(f"• Key concepts covered: {', '.join(key_concepts)}")
+        
+        # Add value propositions
+        seo_parts.append("• Expert insights and real-world examples")
+        seo_parts.append("• Perfect for beginners and advanced learners alike")
+        
+        return "\n".join(seo_parts)
+        
+    except Exception as e:
+        print(f"Error generating SEO content: {str(e)}")
+        return ""
+
+def generate_structured_content(video_content, keywords, topics):
+    """Generate structured content sections"""
+    try:
+        sections = []
+        
+        # Generate content overview if we have enough information
+        if keywords or topics:
+            sections.append("🎯 Content Overview:")
+            if topics:
+                sections.append(f"This video focuses on {topics[0]} with practical insights and actionable advice.")
+            
+            if keywords:
+                key_points = keywords[:4]
+                sections.append(f"Key areas covered include: {', '.join(key_points)}.")
+        
+        # Add engagement section
+        sections.append("\n💡 Why Watch This Video:")
+        sections.append("• Get actionable insights you can apply immediately")
+        sections.append("• Learn from real-world examples and case studies")
+        sections.append("• Join a community of like-minded learners")
+        
+        return "\n".join(sections) if sections else ""
+        
+    except Exception as e:
+        print(f"Error generating structured content: {str(e)}")
+        return ""
+
+def generate_call_to_action(target_audience='general'):
+    """Generate targeted call-to-action based on audience"""
+    try:
+        cta_templates = {
+            'general': [
+                "👍 If this video helped you, please like and subscribe for more content!",
+                "💬 Let us know your thoughts in the comments below!",
+                "🔔 Hit the notification bell to stay updated with our latest videos!"
+            ],
+            'educational': [
+                "📚 Subscribe for more learning content and tutorials!",
+                "💡 Share your learning journey in the comments!",
+                "🎓 Join our educational community by subscribing!"
+            ],
+            'professional': [
+                "🚀 Subscribe for more professional development content!",
+                "💼 Connect with us for more industry insights!",
+                "📈 Help others grow by sharing this video!"
+            ]
+        }
+        
+        ctas = cta_templates.get(target_audience, cta_templates['general'])
+        return "\n".join(ctas)
+        
+    except Exception as e:
+        print(f"Error generating call-to-action: {str(e)}")
+        return "👍 Like, subscribe, and share if you found this helpful!"
+
+def generate_relevant_hashtags(keywords, topics, category, max_hashtags=10):
+    """Generate relevant hashtags based on content analysis"""
+    try:
+        hashtags = set()
+        
+        # Add topic-based hashtags
+        topic_hashtags = {
+            'technology': ['#Tech', '#Innovation', '#Digital', '#Future'],
+            'education': ['#Learning', '#Education', '#Tutorial', '#Knowledge'],
+            'business': ['#Business', '#Entrepreneur', '#Success', '#Growth'],
+            'lifestyle': ['#Lifestyle', '#Life', '#Tips', '#Wellness'],
+            'entertainment': ['#Fun', '#Entertainment', '#Content'],
+            'science': ['#Science', '#Research', '#Discovery'],
+            'creative': ['#Creative', '#Art', '#Design', '#DIY']
+        }
+        
+        # Add hashtags from topics
+        for topic in topics[:2]:  # Use top 2 topics
+            if topic in topic_hashtags:
+                hashtags.update(topic_hashtags[topic][:3])
+        
+        # Add keyword-based hashtags
+        for keyword in keywords[:5]:
+            if len(keyword) > 3:
+                hashtag = f"#{keyword.capitalize()}"
+                if len(hashtag) <= 20:  # Keep hashtags reasonable length
+                    hashtags.add(hashtag)
+        
+        # Add general content hashtags
+        general_hashtags = ['#YouTube', '#Content', '#Video', '#Learn', '#Share']
+        hashtags.update(general_hashtags[:2])
+        
+        # Limit to max_hashtags
+        hashtag_list = list(hashtags)[:max_hashtags]
+        return " ".join(hashtag_list)
+        
+    except Exception as e:
+        print(f"Error generating hashtags: {str(e)}")
+        return "#Content #Video #YouTube"
+
+def generate_social_media_section():
+    """Generate social media links section"""
+    try:
+        social_content = """🌐 Connect With Us:
+• Subscribe: Hit that subscribe button for more amazing content!
+• Social Media: Follow us for behind-the-scenes content and updates
+• Community: Join our growing community of learners and creators
+
+📞 Business Inquiries: Contact us through our channel's about section"""
+        
+        return social_content
+        
+    except Exception as e:
+        print(f"Error generating social media section: {str(e)}")
+        return "📱 Follow us on social media for more content!"
+
+def generate_additional_text(video_content):
+    """Legacy function for backward compatibility"""
+    try:
+        keywords = extract_advanced_keywords(video_content)
+        if not keywords:
+            return ""
+        return f"This video covers topics such as: {', '.join(keywords[:5])}. Learn more about these topics in our other videos!"
     except Exception as e:
         print(f"Error generating additional text: {str(e)}")
         return ""
 
 def extract_keywords(text):
-    try:
-        words = word_tokenize(text.lower())
-        stop_words = set(stopwords.words('english'))
-        filtered_words = [word for word in words if word.isalnum() and word not in stop_words]
-        word_freq = nltk.FreqDist(filtered_words)
-        return [word for word, _ in word_freq.most_common(5)]
-    except Exception as e:
-        print(f"Error extracting keywords: {str(e)}")
-        return []
+    """Legacy function for backward compatibility"""
+    return extract_advanced_keywords(text, max_keywords=5)
 
 def assign_playlist(transcription):
     try:

@@ -89,10 +89,71 @@ def detect_language_route():
 
 @app.route('/enhance_description', methods=['POST'])
 def enhance_description_route():
-    content = request.json['content']
-    video_content = request.json['video_content']
-    enhanced_description = enhance_description(content, video_content)
-    return jsonify({"description": enhanced_description})
+    try:
+        data = request.json
+        content = data.get('content', '')
+        video_content = data.get('video_content', '')
+        
+        # Get enhancement options from request
+        enhancement_options = {
+            'include_seo': data.get('include_seo', True),
+            'include_hashtags': data.get('include_hashtags', True),
+            'include_timestamps': data.get('include_timestamps', False),
+            'include_social_links': data.get('include_social_links', True),
+            'include_call_to_action': data.get('include_call_to_action', True),
+            'target_audience': data.get('target_audience', 'general'),
+            'video_category': data.get('video_category', 'general')
+        }
+        
+        # Generate enhanced description
+        enhanced_description = enhance_description(content, video_content, enhancement_options)
+        
+        # Extract additional insights for the response
+        from utils import extract_advanced_keywords, categorize_content, extract_named_entities
+        
+        keywords = extract_advanced_keywords(video_content)
+        topics = categorize_content(video_content)
+        entities = extract_named_entities(video_content)
+        
+        return jsonify({
+            "description": enhanced_description,
+            "analysis": {
+                "keywords": keywords[:10],
+                "topics": topics,
+                "entities": entities,
+                "word_count": len(enhanced_description.split()),
+                "estimated_read_time": len(enhanced_description.split()) // 200 + 1  # minutes
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({
+            "description": content if 'content' in locals() else "Error occurred",
+            "error": str(e)
+        })
+
+@app.route('/analyze_content', methods=['POST'])
+def analyze_content_route():
+    """Endpoint for content analysis without enhancement"""
+    try:
+        data = request.json
+        content = data.get('content', '')
+        
+        from utils import extract_advanced_keywords, categorize_content, extract_named_entities
+        
+        keywords = extract_advanced_keywords(content)
+        topics = categorize_content(content)
+        entities = extract_named_entities(content)
+        
+        return jsonify({
+            "keywords": keywords,
+            "topics": topics,
+            "entities": entities,
+            "word_count": len(content.split()) if content else 0
+        })
+        
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 @app.route('/assign_playlist', methods=['POST'])
 def assign_playlist_route():

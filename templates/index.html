@@ -138,15 +138,157 @@
     <form id="description-form">
         <div class="mb-3">
             <label for="description-content" class="form-label">Original Description</label>
-            <textarea class="form-control" id="description-content" rows="3" required></textarea>
+            <textarea class="form-control" id="description-content" rows="4" required placeholder="Enter your video description here..."></textarea>
         </div>
         <div class="mb-3">
-            <label for="video-content" class="form-label">Video Content</label>
-            <textarea class="form-control" id="video-content" rows="3" required></textarea>
+            <label for="video-content" class="form-label">Video Content/Transcript</label>
+            <textarea class="form-control" id="video-content" rows="4" required placeholder="Describe what happens in your video or paste transcript..."></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Enhance Description</button>
+        
+        <!-- Enhancement Options -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">Enhancement Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="target-audience" class="form-label">Target Audience</label>
+                            <select class="form-select" id="target-audience">
+                                <option value="general">General Audience</option>
+                                <option value="educational">Educational/Learning</option>
+                                <option value="professional">Professional/Business</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="video-category" class="form-label">Video Category</label>
+                            <select class="form-select" id="video-category">
+                                <option value="general">General</option>
+                                <option value="technology">Technology</option>
+                                <option value="education">Education</option>
+                                <option value="business">Business</option>
+                                <option value="lifestyle">Lifestyle</option>
+                                <option value="entertainment">Entertainment</option>
+                                <option value="science">Science</option>
+                                <option value="creative">Creative</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">Include Sections:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-seo" checked>
+                                <label class="form-check-label" for="include-seo">SEO Optimization</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-hashtags" checked>
+                                <label class="form-check-label" for="include-hashtags">Relevant Hashtags</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-cta" checked>
+                                <label class="form-check-label" for="include-cta">Call-to-Action</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-social" checked>
+                                <label class="form-check-label" for="include-social">Social Media Links</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <span class="spinner-border spinner-border-sm d-none" id="description-spinner"></span>
+                Enhance Description
+            </button>
+            <button type="button" class="btn btn-secondary" id="analyze-content-btn">Analyze Content</button>
+            <button type="button" class="btn btn-outline-secondary" id="preview-description-btn">Quick Preview</button>
+        </div>
     </form>
-    <div id="enhanced-description" class="result-box"></div>
+    
+    <!-- Content Analysis -->
+    <div id="content-analysis" class="mt-3" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Content Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Keywords:</h6>
+                        <div id="analysis-keywords" class="text-muted"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Topics:</h6>
+                        <div id="analysis-topics" class="text-muted"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Entities:</h6>
+                        <div id="analysis-entities" class="text-muted"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Enhanced Description Results -->
+    <div id="description-results" class="mt-3" style="display: none;">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Enhanced Description</h5>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-info" id="description-word-count"></span>
+                    <span class="badge bg-secondary" id="description-read-time"></span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div id="enhanced-description" class="result-box border p-3 bg-light" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+                
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-outline-primary btn-sm" id="copy-description">
+                        Copy Description
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm" id="export-description">
+                        Export as Text
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" id="use-for-upload">
+                        Use for Video Upload
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Analysis Insights -->
+        <div id="description-insights" class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Content Insights</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <small class="text-muted">Detected Keywords:</small>
+                        <div id="insights-keywords" class="mb-2"></div>
+                        <small class="text-muted">Content Topics:</small>
+                        <div id="insights-topics"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Named Entities:</small>
+                        <div id="insights-entities" class="mb-2"></div>
+                        <small class="text-muted">Statistics:</small>
+                        <div id="insights-stats"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="description-error" class="alert alert-danger mt-3" style="display: none;"></div>
 </div>
 
 <div class="form-section">

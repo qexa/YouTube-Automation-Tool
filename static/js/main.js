@@ -122,15 +122,104 @@ document.addEventListener('DOMContentLoaded', function() {
 
     descriptionForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        
         const content = document.getElementById('description-content').value;
         const videoContent = document.getElementById('video-content').value;
-        const response = await fetch('/enhance_description', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({content: content, video_content: videoContent})
-        });
-        const data = await response.json();
-        document.getElementById('enhanced-description').textContent = data.description;
+        
+        if (!content.trim() || !videoContent.trim()) {
+            showDescriptionError('Please fill in both the original description and video content');
+            return;
+        }
+        
+        // Get enhancement options
+        const enhancementOptions = {
+            content: content,
+            video_content: videoContent,
+            include_seo: document.getElementById('include-seo').checked,
+            include_hashtags: document.getElementById('include-hashtags').checked,
+            include_call_to_action: document.getElementById('include-cta').checked,
+            include_social_links: document.getElementById('include-social').checked,
+            target_audience: document.getElementById('target-audience').value,
+            video_category: document.getElementById('video-category').value
+        };
+        
+        showDescriptionLoading(true);
+        hideDescriptionResults();
+        
+        try {
+            const response = await fetch('/enhance_description', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(enhancementOptions)
+            });
+            const data = await response.json();
+            
+            if (data.error) {
+                showDescriptionError(data.error);
+            } else {
+                showDescriptionResults(data);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showDescriptionError('Error enhancing description. Please try again.');
+        } finally {
+            showDescriptionLoading(false);
+        }
+    });
+
+    // Content analysis button handler
+    document.getElementById('analyze-content-btn').addEventListener('click', async function() {
+        const content = document.getElementById('video-content').value;
+        
+        if (!content.trim()) {
+            alert('Please enter video content to analyze');
+            return;
+        }
+        
+        this.disabled = true;
+        this.textContent = 'Analyzing...';
+        
+        try {
+            const response = await fetch('/analyze_content', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content: content})
+            });
+            const data = await response.json();
+            
+            showContentAnalysis(data);
+        } catch (error) {
+            console.error('Error analyzing content:', error);
+        } finally {
+            this.disabled = false;
+            this.textContent = 'Analyze Content';
+        }
+    });
+
+    // Copy, export, and use handlers for descriptions
+    document.getElementById('copy-description').addEventListener('click', function() {
+        const text = document.getElementById('enhanced-description').textContent;
+        copyToClipboard(text, 'Description copied to clipboard!');
+    });
+
+    document.getElementById('export-description').addEventListener('click', function() {
+        const description = document.getElementById('enhanced-description').textContent;
+        downloadAsFile(description, 'enhanced-description.txt', 'text/plain');
+    });
+
+    document.getElementById('use-for-upload').addEventListener('click', function() {
+        const description = document.getElementById('enhanced-description').textContent;
+        const uploadDescriptionField = document.getElementById('upload-description');
+        if (uploadDescriptionField) {
+            uploadDescriptionField.value = description;
+            uploadDescriptionField.scrollIntoView({ behavior: 'smooth' });
+            
+            // Highlight the field briefly
+            uploadDescriptionField.classList.add('border-success');
+            setTimeout(() => {
+                uploadDescriptionField.classList.remove('border-success');
+            }, 2000);
+        }
     });
 
     playlistForm.addEventListener('submit', async function(e) {
@@ -269,6 +358,112 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.removeChild(link);
     });
 });
+
+// Description enhancement helper functions
+function showDescriptionLoading(isLoading) {
+    const spinner = document.getElementById('description-spinner');
+    const submitBtn = document.querySelector('#description-form button[type="submit"]');
+    
+    if (isLoading) {
+        spinner.classList.remove('d-none');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enhancing...';
+    } else {
+        spinner.classList.add('d-none');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Enhance Description';
+    }
+}
+
+function showDescriptionResults(data) {
+    const resultsDiv = document.getElementById('description-results');
+    const errorDiv = document.getElementById('description-error');
+    
+    // Hide error and show results
+    errorDiv.style.display = 'none';
+    resultsDiv.style.display = 'block';
+    
+    // Update description content with proper formatting
+    const descriptionDiv = document.getElementById('enhanced-description');
+    descriptionDiv.innerHTML = data.description.replace(/\n/g, '<br>');
+    
+    // Update badges
+    if (data.analysis) {
+        const wordCountBadge = document.getElementById('description-word-count');
+        const readTimeBadge = document.getElementById('description-read-time');
+        
+        wordCountBadge.textContent = `${data.analysis.word_count} words`;
+        readTimeBadge.textContent = `${data.analysis.estimated_read_time} min read`;
+        
+        // Show insights
+        showDescriptionInsights(data.analysis);
+    }
+}
+
+function showDescriptionInsights(analysis) {
+    const insightsDiv = document.getElementById('description-insights');
+    insightsDiv.style.display = 'block';
+    
+    // Update insights content
+    const keywordsDiv = document.getElementById('insights-keywords');
+    const topicsDiv = document.getElementById('insights-topics');
+    const entitiesDiv = document.getElementById('insights-entities');
+    const statsDiv = document.getElementById('insights-stats');
+    
+    // Keywords as badges
+    keywordsDiv.innerHTML = analysis.keywords.map(keyword => 
+        `<span class="badge bg-primary me-1">${keyword}</span>`
+    ).join('');
+    
+    // Topics as badges
+    topicsDiv.innerHTML = analysis.topics.map(topic => 
+        `<span class="badge bg-info me-1">${topic}</span>`
+    ).join('');
+    
+    // Entities as badges
+    entitiesDiv.innerHTML = analysis.entities.map(entity => 
+        `<span class="badge bg-secondary me-1">${entity}</span>`
+    ).join('');
+    
+    // Statistics
+    statsDiv.innerHTML = `
+        <small>Words: ${analysis.word_count}</small><br>
+        <small>Read time: ${analysis.estimated_read_time} minutes</small>
+    `;
+}
+
+function showDescriptionError(errorMessage) {
+    const resultsDiv = document.getElementById('description-results');
+    const errorDiv = document.getElementById('description-error');
+    
+    resultsDiv.style.display = 'none';
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = errorMessage;
+}
+
+function hideDescriptionResults() {
+    const resultsDiv = document.getElementById('description-results');
+    const errorDiv = document.getElementById('description-error');
+    const analysisDiv = document.getElementById('content-analysis');
+    
+    resultsDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+    analysisDiv.style.display = 'none';
+}
+
+function showContentAnalysis(data) {
+    const analysisDiv = document.getElementById('content-analysis');
+    analysisDiv.style.display = 'block';
+    
+    // Update analysis content
+    const keywordsDiv = document.getElementById('analysis-keywords');
+    const topicsDiv = document.getElementById('analysis-topics');
+    const entitiesDiv = document.getElementById('analysis-entities');
+    
+    keywordsDiv.textContent = data.keywords.length > 0 ? data.keywords.join(', ') : 'None detected';
+    topicsDiv.textContent = data.topics.length > 0 ? data.topics.join(', ') : 'None detected';
+    entitiesDiv.textContent = data.entities.length > 0 ? data.entities.join(', ') : 'None detected';
+}
 
 // Transcription helper functions
 function showTranscriptionLoading(isLoading) {
