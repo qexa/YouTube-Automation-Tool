@@ -759,3 +759,357 @@ def thumbnail_to_base64(thumbnail_image):
     except Exception as e:
         print(f"Error converting thumbnail to base64: {str(e)}")
         return None
+
+# Video Tags and Category Management Functions
+
+def generate_video_tags(content, options=None):
+    """Generate intelligent video tags based on content analysis"""
+    if options is None:
+        options = {
+            'max_tags': 10,
+            'include_keywords': True,
+            'include_trending': True,
+            'include_long_tail': True,
+            'include_branded': False,
+            'language': 'en',
+            'category': 'auto'
+        }
+    
+    try:
+        # Extract keywords and entities
+        keywords = extract_advanced_keywords(content, max_keywords=20)
+        entities = extract_named_entities(content)
+        topics = categorize_content(content)
+        
+        # Generate different types of tags
+        all_tags = []
+        
+        # Content-based keywords
+        if options.get('include_keywords', True):
+            content_tags = keywords[:options.get('max_tags', 10) // 2]
+            all_tags.extend(content_tags)
+        
+        # Trending and popular terms
+        if options.get('include_trending', True):
+            trending_tags = generate_trending_tags(topics, entities)
+            all_tags.extend(trending_tags[:3])
+        
+        # Long-tail keywords
+        if options.get('include_long_tail', True):
+            long_tail_tags = generate_long_tail_tags(content, keywords)
+            all_tags.extend(long_tail_tags[:4])
+        
+        # Entity-based tags
+        entity_tags = [entity.lower().replace(' ', '') for entity in entities[:3]]
+        all_tags.extend(entity_tags)
+        
+        # Remove duplicates and limit to max_tags
+        unique_tags = []
+        seen = set()
+        for tag in all_tags:
+            tag_clean = tag.lower().strip()
+            if tag_clean and tag_clean not in seen and len(tag_clean) > 2:
+                unique_tags.append(tag)
+                seen.add(tag_clean)
+                if len(unique_tags) >= options.get('max_tags', 10):
+                    break
+        
+        # Calculate SEO score
+        seo_score = calculate_tag_seo_score(unique_tags, content)
+        
+        # Generate insights
+        insights = generate_tag_insights(unique_tags, topics, entities)
+        
+        return {
+            'tags': unique_tags,
+            'character_count': sum(len(tag) for tag in unique_tags) + len(unique_tags) - 1,  # Including commas
+            'seo_score': seo_score,
+            'insights': insights,
+            'topics': topics,
+            'entities': entities
+        }
+        
+    except Exception as e:
+        print(f"Error generating tags: {str(e)}")
+        # Fallback to basic keyword extraction
+        basic_keywords = extract_keywords(content)
+        return {
+            'tags': basic_keywords[:10],
+            'character_count': sum(len(tag) for tag in basic_keywords[:10]) + 9,
+            'seo_score': 75,
+            'insights': 'Basic tag generation used due to processing error.',
+            'topics': ['general'],
+            'entities': []
+        }
+
+def generate_trending_tags(topics, entities):
+    """Generate trending tags based on topics and entities"""
+    trending_base = {
+        'technology': ['tech', 'innovation', 'digital', 'future', 'ai', 'coding'],
+        'education': ['learning', 'tutorial', 'howto', 'guide', 'tips', 'educational'],
+        'entertainment': ['fun', 'viral', 'trending', 'popular', 'amazing', 'awesome'],
+        'business': ['entrepreneur', 'startup', 'marketing', 'business', 'success', 'money'],
+        'lifestyle': ['lifestyle', 'daily', 'routine', 'life', 'personal', 'journey'],
+        'science': ['science', 'research', 'discovery', 'experiment', 'facts', 'amazing'],
+        'creative': ['creative', 'art', 'design', 'diy', 'craft', 'tutorial']
+    }
+    
+    trending_tags = []
+    for topic in topics:
+        if topic in trending_base:
+            trending_tags.extend(trending_base[topic][:2])
+    
+    # Add year for trending context
+    from datetime import datetime
+    current_year = datetime.now().year
+    trending_tags.append(str(current_year))
+    
+    return trending_tags
+
+def generate_long_tail_tags(content, keywords):
+    """Generate long-tail keyword combinations"""
+    long_tail_tags = []
+    
+    # Common long-tail patterns
+    patterns = [
+        'how to {}',
+        '{} tutorial',
+        '{} guide',
+        '{} tips',
+        'best {}',
+        '{} explained',
+        '{} for beginners'
+    ]
+    
+    for keyword in keywords[:3]:
+        for pattern in patterns[:2]:  # Limit to avoid too many tags
+            long_tail = pattern.format(keyword)
+            if len(long_tail) <= 30:  # YouTube tag length limit
+                long_tail_tags.append(long_tail)
+    
+    return long_tail_tags
+
+def calculate_tag_seo_score(tags, content):
+    """Calculate SEO effectiveness score for tags"""
+    score = 0
+    content_lower = content.lower()
+    
+    # Check tag relevance to content
+    relevant_tags = 0
+    for tag in tags:
+        if tag.lower() in content_lower:
+            relevant_tags += 1
+    
+    relevance_score = (relevant_tags / len(tags)) * 40 if tags else 0
+    
+    # Check tag diversity
+    unique_chars = set(''.join(tags).lower())
+    diversity_score = min(len(unique_chars) / 20, 1) * 30
+    
+    # Check tag length distribution
+    avg_length = sum(len(tag) for tag in tags) / len(tags) if tags else 0
+    length_score = 30 if 5 <= avg_length <= 15 else 20
+    
+    total_score = relevance_score + diversity_score + length_score
+    return min(int(total_score), 100)
+
+def generate_tag_insights(tags, topics, entities):
+    """Generate performance insights for tags"""
+    insights = []
+    
+    # Tag count analysis
+    tag_count = len(tags)
+    if tag_count < 5:
+        insights.append("⚠️ Consider adding more tags (5-15 recommended)")
+    elif tag_count > 15:
+        insights.append("⚠️ Too many tags may reduce effectiveness")
+    else:
+        insights.append("✅ Good tag count for optimal discoverability")
+    
+    # Topic coverage
+    if len(topics) > 1:
+        insights.append(f"✅ Multi-topic content covering: {', '.join(topics[:3])}")
+    else:
+        insights.append("💡 Consider broader topic coverage for better reach")
+    
+    # Entity recognition
+    if entities:
+        insights.append(f"🎯 Key entities identified: {', '.join(entities[:3])}")
+    
+    # Tag length analysis
+    long_tags = [tag for tag in tags if len(tag) > 20]
+    if long_tags:
+        insights.append(f"💡 {len(long_tags)} long-tail tags for specific searches")
+    
+    return ' • '.join(insights)
+
+def suggest_youtube_category(content, topics=None):
+    """Suggest appropriate YouTube category based on content analysis"""
+    if topics is None:
+        topics = categorize_content(content)
+    
+    # YouTube category mapping
+    category_mapping = {
+        'education': ('27', 'Education'),
+        'technology': ('28', 'Science & Technology'),
+        'entertainment': ('24', 'Entertainment'),
+        'business': ('25', 'News & Politics'),
+        'lifestyle': ('26', 'Howto & Style'),
+        'creative': ('1', 'Film & Animation'),
+        'science': ('28', 'Science & Technology'),
+        'music': ('10', 'Music'),
+        'gaming': ('20', 'Gaming'),
+        'sports': ('17', 'Sports'),
+        'travel': ('19', 'Travel & Events'),
+        'comedy': ('23', 'Comedy'),
+        'pets': ('15', 'Pets & Animals'),
+        'vehicles': ('2', 'Autos & Vehicles'),
+        'people': ('22', 'People & Blogs')
+    }
+    
+    # Find best matching category
+    content_lower = content.lower()
+    
+    # Check for explicit category keywords
+    explicit_matches = {
+        'tutorial': 'education',
+        'how to': 'education', 
+        'guide': 'education',
+        'review': 'technology',
+        'unboxing': 'technology',
+        'vlog': 'people',
+        'comedy': 'comedy',
+        'funny': 'comedy',
+        'music': 'music',
+        'song': 'music',
+        'game': 'gaming',
+        'gameplay': 'gaming',
+        'travel': 'travel',
+        'recipe': 'lifestyle',
+        'workout': 'lifestyle'
+    }
+    
+    for keyword, category in explicit_matches.items():
+        if keyword in content_lower:
+            if category in category_mapping:
+                cat_id, cat_name = category_mapping[category]
+                return {
+                    'category_id': cat_id,
+                    'category_name': cat_name,
+                    'confidence': 'High',
+                    'reason': f'Content contains "{keyword}" indicating {category} category'
+                }
+    
+    # Use topic-based suggestion
+    if topics:
+        primary_topic = topics[0]
+        if primary_topic in category_mapping:
+            cat_id, cat_name = category_mapping[primary_topic]
+            return {
+                'category_id': cat_id,
+                'category_name': cat_name,
+                'confidence': 'Medium',
+                'reason': f'Content classified as {primary_topic}'
+            }
+    
+    # Default suggestion
+    return {
+        'category_id': '22',
+        'category_name': 'People & Blogs',
+        'confidence': 'Low',
+        'reason': 'General content category recommended'
+    }
+
+def analyze_content_for_tags(content):
+    """Analyze content specifically for tag generation insights"""
+    try:
+        # Extract various content features
+        keywords = extract_advanced_keywords(content, max_keywords=15)
+        entities = extract_named_entities(content)
+        topics = categorize_content(content)
+        
+        # Calculate content metrics
+        word_count = len(content.split())
+        sentence_count = len([s for s in content.split('.') if s.strip()])
+        
+        # Content quality score
+        quality_score = calculate_content_quality_score(content, keywords, entities)
+        
+        return {
+            'keywords': keywords,
+            'entities': entities,
+            'topics': topics,
+            'word_count': word_count,
+            'sentence_count': sentence_count,
+            'quality_score': quality_score,
+            'tag_potential': len(keywords) + len(entities),
+            'content_type': determine_content_type(content)
+        }
+        
+    except Exception as e:
+        print(f"Error analyzing content for tags: {str(e)}")
+        return {
+            'keywords': [],
+            'entities': [],
+            'topics': ['general'],
+            'word_count': 0,
+            'sentence_count': 0,
+            'quality_score': 50,
+            'tag_potential': 0,
+            'content_type': 'general'
+        }
+
+def calculate_content_quality_score(content, keywords, entities):
+    """Calculate content quality score for tag generation"""
+    score = 0
+    
+    # Length score (20 points)
+    word_count = len(content.split())
+    if 50 <= word_count <= 300:
+        score += 20
+    elif word_count > 20:
+        score += 15
+    else:
+        score += 5
+    
+    # Keyword density (30 points)
+    if keywords:
+        unique_keywords = len(set(keywords))
+        if unique_keywords >= 5:
+            score += 30
+        else:
+            score += unique_keywords * 6
+    
+    # Entity recognition (25 points)
+    if entities:
+        entity_count = len(entities)
+        score += min(entity_count * 8, 25)
+    
+    # Content structure (25 points)
+    sentences = content.split('.')
+    avg_sentence_length = sum(len(s.split()) for s in sentences) / len(sentences) if sentences else 0
+    if 10 <= avg_sentence_length <= 25:
+        score += 25
+    else:
+        score += 15
+    
+    return min(score, 100)
+
+def determine_content_type(content):
+    """Determine the type of content for better tag generation"""
+    content_lower = content.lower()
+    
+    content_indicators = {
+        'tutorial': ['how to', 'step by step', 'tutorial', 'guide', 'learn', 'teach'],
+        'review': ['review', 'unboxing', 'test', 'comparison', 'vs', 'better'],
+        'vlog': ['vlog', 'daily', 'routine', 'my day', 'life', 'personal'],
+        'news': ['news', 'update', 'announcement', 'breaking', 'latest'],
+        'entertainment': ['funny', 'comedy', 'entertainment', 'fun', 'hilarious'],
+        'educational': ['explain', 'education', 'science', 'facts', 'research']
+    }
+    
+    for content_type, indicators in content_indicators.items():
+        if any(indicator in content_lower for indicator in indicators):
+            return content_type
+    
+    return 'general'

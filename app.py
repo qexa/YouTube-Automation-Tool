@@ -242,5 +242,91 @@ def generate_custom_thumbnail_route():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
+@app.route('/generate_tags', methods=['POST'])
+def generate_tags_route():
+    """Endpoint for intelligent video tag generation"""
+    try:
+        data = request.get_json()
+        content = data.get('content', '')
+        
+        if not content:
+            return jsonify({'error': 'Content is required for tag generation'})
+        
+        # Extract options from request
+        options = {
+            'max_tags': data.get('max_tags', 10),
+            'include_keywords': data.get('include_keywords', True),
+            'include_trending': data.get('include_trending', True),
+            'include_long_tail': data.get('include_long_tail', True),
+            'include_branded': data.get('include_branded', False),
+            'language': data.get('language', 'en'),
+            'category': data.get('category', 'auto')
+        }
+        
+        # Generate tags
+        tag_data = utils.generate_video_tags(content, options)
+        
+        # Get category suggestion
+        category_suggestion = utils.suggest_youtube_category(content, tag_data.get('topics'))
+        
+        return jsonify({
+            'tags': tag_data['tags'],
+            'character_count': tag_data['character_count'],
+            'seo_score': tag_data['seo_score'],
+            'insights': tag_data['insights'],
+            'category': category_suggestion,
+            'analysis': {
+                'topics': tag_data['topics'],
+                'entities': tag_data['entities'],
+                'tag_count': len(tag_data['tags'])
+            }
+        })
+        
+    except Exception as e:
+        print(f"Error generating tags: {str(e)}")
+        return jsonify({'error': f'Error generating tags: {str(e)}'})
+
+@app.route('/suggest_category', methods=['POST'])
+def suggest_category_route():
+    """Endpoint for YouTube category suggestion"""
+    try:
+        data = request.get_json()
+        content = data.get('content', '')
+        
+        if not content:
+            return jsonify({'error': 'Content is required for category suggestion'})
+        
+        category_suggestion = utils.suggest_youtube_category(content)
+        
+        return jsonify({
+            'category': category_suggestion,
+            'success': True
+        })
+        
+    except Exception as e:
+        print(f"Error suggesting category: {str(e)}")
+        return jsonify({'error': f'Error suggesting category: {str(e)}'})
+
+@app.route('/analyze_tags_content', methods=['POST'])
+def analyze_tags_content_route():
+    """Endpoint for content analysis specifically for tag generation"""
+    try:
+        data = request.get_json()
+        content = data.get('content', '')
+        
+        if not content:
+            return jsonify({'error': 'Content is required for analysis'})
+        
+        analysis = utils.analyze_content_for_tags(content)
+        
+        return jsonify({
+            'analysis': analysis,
+            'success': True
+        })
+        
+    except Exception as e:
+        print(f"Error analyzing content for tags: {str(e)}")
+        return jsonify({'error': f'Error analyzing content: {str(e)}'})
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

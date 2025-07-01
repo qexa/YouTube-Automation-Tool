@@ -280,6 +280,173 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Video Tags and Category Management handlers
+    const tagsForm = document.getElementById('tags-form');
+    const tagsCountSlider = document.getElementById('tags-count');
+    const tagsCountDisplay = document.getElementById('tags-count-display');
+
+    // Update tag count display
+    if (tagsCountSlider && tagsCountDisplay) {
+        tagsCountSlider.addEventListener('input', function() {
+            tagsCountDisplay.textContent = this.value;
+        });
+    }
+
+    // Tags form submission
+    if (tagsForm) {
+        tagsForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const content = document.getElementById('tags-content').value;
+            
+            if (!content.trim()) {
+                showTagsError('Please enter video content to generate tags');
+                return;
+            }
+            
+            const options = {
+                content: content,
+                max_tags: parseInt(document.getElementById('tags-count').value),
+                include_keywords: document.getElementById('include-keywords').checked,
+                include_trending: document.getElementById('include-trending').checked,
+                include_long_tail: document.getElementById('include-long-tail').checked,
+                include_branded: document.getElementById('include-branded').checked,
+                language: document.getElementById('tags-language').value,
+                category: document.getElementById('tags-category').value
+            };
+            
+            showTagsLoading(true);
+            hideTagsResults();
+            
+            try {
+                const response = await fetch('/generate_tags', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(options)
+                });
+                const data = await response.json();
+                
+                if (data.error) {
+                    showTagsError(data.error);
+                } else {
+                    showTagsResults(data);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showTagsError('Error generating tags. Please try again.');
+            } finally {
+                showTagsLoading(false);
+            }
+        });
+    }
+
+    // Content analysis button
+    document.getElementById('analyze-tags-btn').addEventListener('click', async function() {
+        const content = document.getElementById('tags-content').value;
+        
+        if (!content.trim()) {
+            alert('Please enter video content to analyze');
+            return;
+        }
+        
+        this.disabled = true;
+        this.textContent = 'Analyzing...';
+        
+        try {
+            const response = await fetch('/analyze_tags_content', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content: content})
+            });
+            const data = await response.json();
+            
+            showTagsAnalysis(data.analysis);
+        } catch (error) {
+            console.error('Error analyzing content:', error);
+        } finally {
+            this.disabled = false;
+            this.textContent = 'Analyze Content First';
+        }
+    });
+
+    // Category suggestion button
+    document.getElementById('suggest-category-btn').addEventListener('click', async function() {
+        const content = document.getElementById('tags-content').value;
+        
+        if (!content.trim()) {
+            alert('Please enter video content to suggest category');
+            return;
+        }
+        
+        this.disabled = true;
+        this.textContent = 'Suggesting...';
+        
+        try {
+            const response = await fetch('/suggest_category', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({content: content})
+            });
+            const data = await response.json();
+            
+            if (data.category) {
+                // Update the category dropdown
+                const categorySelect = document.getElementById('tags-category');
+                categorySelect.value = data.category.category_id;
+                
+                // Show category suggestion info
+                alert(`Suggested Category: ${data.category.category_name}\nConfidence: ${data.category.confidence}\nReason: ${data.category.reason}`);
+            }
+        } catch (error) {
+            console.error('Error suggesting category:', error);
+        } finally {
+            this.disabled = false;
+            this.textContent = 'Suggest Category';
+        }
+    });
+
+    // Copy, export, and use handlers for tags
+    document.getElementById('copy-tags').addEventListener('click', function() {
+        const tags = Array.from(document.querySelectorAll('#generated-tags .badge'))
+            .map(badge => badge.textContent)
+            .join(', ');
+        copyToClipboard(tags, 'Tags copied to clipboard!');
+    });
+
+    document.getElementById('copy-category').addEventListener('click', function() {
+        const categoryText = document.getElementById('recommended-category').textContent;
+        copyToClipboard(categoryText, 'Category info copied to clipboard!');
+    });
+
+    document.getElementById('export-tags').addEventListener('click', function() {
+        const tags = Array.from(document.querySelectorAll('#generated-tags .badge'))
+            .map(badge => badge.textContent);
+        const csvContent = 'Tag,Type\n' + tags.map(tag => `"${tag}","YouTube Tag"`).join('\n');
+        downloadAsFile(csvContent, 'video-tags.csv', 'text/csv');
+    });
+
+    document.getElementById('use-tags-upload').addEventListener('click', function() {
+        const tags = Array.from(document.querySelectorAll('#generated-tags .badge'))
+            .map(badge => badge.textContent)
+            .join(', ');
+        
+        // If upload form exists, populate the tags field
+        const uploadTagsField = document.getElementById('upload-tags');
+        if (uploadTagsField) {
+            uploadTagsField.value = tags;
+            uploadTagsField.scrollIntoView({ behavior: 'smooth' });
+            
+            // Highlight the field briefly
+            uploadTagsField.classList.add('border-success');
+            setTimeout(() => {
+                uploadTagsField.classList.remove('border-success');
+            }, 2000);
+        } else {
+            // Copy to clipboard as fallback
+            copyToClipboard(tags, 'Tags copied to clipboard for upload!');
+        }
+    });
+
     // Custom thumbnail form handler
     customThumbnailForm.addEventListener('submit', async function(e) {
         e.preventDefault();
