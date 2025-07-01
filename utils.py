@@ -8,6 +8,11 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import os
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+import io
+import base64
 
 # Download required NLTK data
 try:
@@ -165,4 +170,152 @@ def upload_video(title, description, tags, category_id, privacy_status, file_pat
         return response['id']
     except Exception as e:
         print(f"An error occurred while uploading video: {e}")
+        return None
+
+def extract_video_frame(video_file_path, timestamp=None):
+    """Extract a frame from video at specified timestamp (in seconds)"""
+    try:
+        cap = cv2.VideoCapture(video_file_path)
+        if not cap.isOpened():
+            raise Exception("Unable to open video file")
+        
+        if timestamp is not None:
+            cap.set(cv2.CAP_PROP_POS_MSEC, timestamp * 1000)
+        else:
+            # Default to middle of video
+            total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, total_frames // 2)
+        
+        ret, frame = cap.read()
+        cap.release()
+        
+        if ret:
+            return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        else:
+            raise Exception("Unable to extract frame from video")
+    except Exception as e:
+        print(f"Error extracting video frame: {str(e)}")
+        return None
+
+def create_thumbnail_from_frame(frame, title="", width=1280, height=720):
+    """Create a YouTube thumbnail from a video frame"""
+    try:
+        # Convert numpy array to PIL Image
+        pil_image = Image.fromarray(frame)
+        
+        # Resize to YouTube thumbnail dimensions
+        pil_image = pil_image.resize((width, height), Image.Resampling.LANCZOS)
+        
+        # Create overlay for title
+        if title:
+            overlay = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+            draw = ImageDraw.Draw(overlay)
+            
+            # Try to use a bold font, fallback to default
+            try:
+                font_size = min(width // 20, 60)
+                font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+            except:
+                font = ImageFont.load_default()
+            
+            # Add text with shadow effect
+            text_bbox = draw.textbbox((0, 0), title, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+            
+            # Position text at bottom
+            x = (width - text_width) // 2
+            y = height - text_height - 50
+            
+            # Draw shadow
+            draw.text((x + 2, y + 2), title, font=font, fill=(0, 0, 0, 180))
+            # Draw main text
+            draw.text((x, y), title, font=font, fill=(255, 255, 255, 255))
+            
+            # Composite overlay onto image
+            pil_image = Image.alpha_composite(pil_image.convert('RGBA'), overlay)
+            pil_image = pil_image.convert('RGB')
+        
+        return pil_image
+    except Exception as e:
+        print(f"Error creating thumbnail: {str(e)}")
+        return None
+
+def create_custom_thumbnail(title, subtitle="", template="gradient", width=1280, height=720):
+    """Create a custom thumbnail with text and background"""
+    try:
+        # Create base image
+        img = Image.new('RGB', (width, height), color=(30, 30, 30))
+        draw = ImageDraw.Draw(img)
+        
+        if template == "gradient":
+            # Create gradient background
+            for y in range(height):
+                r = int(30 + (200 - 30) * y / height)
+                g = int(30 + (100 - 30) * y / height)
+                b = int(30 + (200 - 30) * y / height)
+                draw.line([(0, y), (width, y)], fill=(r, g, b))
+        elif template == "solid":
+            # Solid color background
+            draw.rectangle([0, 0, width, height], fill=(64, 128, 255))
+        elif template == "pattern":
+            # Simple pattern
+            for x in range(0, width, 100):
+                for y in range(0, height, 100):
+                    if (x // 100 + y // 100) % 2:
+                        draw.rectangle([x, y, x + 100, y + 100], fill=(50, 50, 80))
+        
+        # Add title text
+        if title:
+            try:
+                title_font_size = min(width // 15, 80)
+                title_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", title_font_size)
+            except:
+                title_font = ImageFont.load_default()
+            
+            # Calculate text position
+            title_bbox = draw.textbbox((0, 0), title, font=title_font)
+            title_width = title_bbox[2] - title_bbox[0]
+            title_height = title_bbox[3] - title_bbox[1]
+            
+            title_x = (width - title_width) // 2
+            title_y = height // 2 - title_height // 2
+            
+            # Draw title with shadow
+            draw.text((title_x + 3, title_y + 3), title, font=title_font, fill=(0, 0, 0, 200))
+            draw.text((title_x, title_y), title, font=title_font, fill=(255, 255, 255))
+        
+        # Add subtitle
+        if subtitle:
+            try:
+                subtitle_font_size = min(width // 25, 40)
+                subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", subtitle_font_size)
+            except:
+                subtitle_font = ImageFont.load_default()
+            
+            subtitle_bbox = draw.textbbox((0, 0), subtitle, font=subtitle_font)
+            subtitle_width = subtitle_bbox[2] - subtitle_bbox[0]
+            subtitle_height = subtitle_bbox[3] - subtitle_bbox[1]
+            
+            subtitle_x = (width - subtitle_width) // 2
+            subtitle_y = title_y + title_height + 20
+            
+            # Draw subtitle with shadow
+            draw.text((subtitle_x + 2, subtitle_y + 2), subtitle, font=subtitle_font, fill=(0, 0, 0, 150))
+            draw.text((subtitle_x, subtitle_y), subtitle, font=subtitle_font, fill=(220, 220, 220))
+        
+        return img
+    except Exception as e:
+        print(f"Error creating custom thumbnail: {str(e)}")
+        return None
+
+def thumbnail_to_base64(thumbnail_image):
+    """Convert PIL Image to base64 string for web display"""
+    try:
+        buffer = io.BytesIO()
+        thumbnail_image.save(buffer, format='PNG')
+        img_str = base64.b64encode(buffer.getvalue())
+        return img_str.decode()
+    except Exception as e:
+        print(f"Error converting thumbnail to base64: {str(e)}")
         return None

@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video
+from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video, extract_video_frame, create_thumbnail_from_frame, create_custom_thumbnail, thumbnail_to_base64
 
 class Base(DeclarativeBase):
     pass
@@ -78,6 +78,59 @@ def upload_video_route():
         return jsonify({"success": True, "video_id": video_id})
     else:
         return jsonify({"success": False, "error": "Failed to upload video"})
+
+@app.route('/generate_thumbnail_from_video', methods=['POST'])
+def generate_thumbnail_from_video_route():
+    try:
+        video_file = request.files['video']
+        title = request.form.get('title', '')
+        timestamp = request.form.get('timestamp')
+        
+        if timestamp:
+            timestamp = float(timestamp)
+        else:
+            timestamp = None
+        
+        # Save video temporarily
+        temp_path = f"temp_{video_file.filename}"
+        video_file.save(temp_path)
+        
+        # Extract frame
+        frame = extract_video_frame(temp_path, timestamp)
+        
+        # Clean up temp file
+        os.remove(temp_path)
+        
+        if frame is not None:
+            # Create thumbnail
+            thumbnail = create_thumbnail_from_frame(frame, title)
+            if thumbnail:
+                # Convert to base64 for web display
+                thumbnail_b64 = thumbnail_to_base64(thumbnail)
+                return jsonify({"success": True, "thumbnail": thumbnail_b64})
+        
+        return jsonify({"success": False, "error": "Failed to generate thumbnail from video"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
+
+@app.route('/generate_custom_thumbnail', methods=['POST'])
+def generate_custom_thumbnail_route():
+    try:
+        title = request.json.get('title', '')
+        subtitle = request.json.get('subtitle', '')
+        template = request.json.get('template', 'gradient')
+        
+        # Create custom thumbnail
+        thumbnail = create_custom_thumbnail(title, subtitle, template)
+        
+        if thumbnail:
+            # Convert to base64 for web display
+            thumbnail_b64 = thumbnail_to_base64(thumbnail)
+            return jsonify({"success": True, "thumbnail": thumbnail_b64})
+        else:
+            return jsonify({"success": False, "error": "Failed to generate custom thumbnail"})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

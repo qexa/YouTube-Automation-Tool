@@ -114,6 +114,65 @@
 </div>
 
 <div class="form-section">
+    <h2>Thumbnail Generator</h2>
+    
+    <!-- Custom Thumbnail Generator -->
+    <div class="mb-4">
+        <h3>Create Custom Thumbnail</h3>
+        <form id="custom-thumbnail-form">
+            <div class="mb-3">
+                <label for="thumbnail-title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="thumbnail-title" required>
+            </div>
+            <div class="mb-3">
+                <label for="thumbnail-subtitle" class="form-label">Subtitle (optional)</label>
+                <input type="text" class="form-control" id="thumbnail-subtitle">
+            </div>
+            <div class="mb-3">
+                <label for="thumbnail-template" class="form-label">Template</label>
+                <select class="form-select" id="thumbnail-template">
+                    <option value="gradient">Gradient Background</option>
+                    <option value="solid">Solid Color</option>
+                    <option value="pattern">Pattern Background</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Custom Thumbnail</button>
+        </form>
+    </div>
+    
+    <!-- Video Frame Thumbnail Generator -->
+    <div class="mb-4">
+        <h3>Generate from Video Frame</h3>
+        <form id="video-thumbnail-form">
+            <div class="mb-3">
+                <label for="video-file" class="form-label">Video File</label>
+                <input type="file" class="form-control" id="video-file" accept="video/*" required>
+            </div>
+            <div class="mb-3">
+                <label for="frame-title" class="form-label">Title Overlay</label>
+                <input type="text" class="form-control" id="frame-title">
+            </div>
+            <div class="mb-3">
+                <label for="timestamp" class="form-label">Timestamp (seconds, leave empty for middle of video)</label>
+                <input type="number" class="form-control" id="timestamp" step="0.1" min="0">
+            </div>
+            <button type="submit" class="btn btn-primary">Generate from Video</button>
+        </form>
+    </div>
+    
+    <!-- Thumbnail Preview -->
+    <div id="thumbnail-preview" class="result-box" style="display: none;">
+        <h4>Generated Thumbnail Preview</h4>
+        <img id="thumbnail-image" class="img-fluid border rounded" style="max-width: 640px;" alt="Generated thumbnail">
+        <div class="mt-2">
+            <button id="download-thumbnail" class="btn btn-success">Download Thumbnail</button>
+        </div>
+    </div>
+    
+    <div id="thumbnail-error" class="result-box text-danger" style="display: none;"></div>
+</div>
+
+<div class="form-section">
     <h2>Content Hierarchy Visualization</h2>
     <div id="hierarchy-visualization"></div>
 </div>

@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const playlistForm = document.getElementById('playlist-form');
     const numberForm = document.getElementById('number-form');
     const uploadForm = document.getElementById('upload-form');
+    const customThumbnailForm = document.getElementById('custom-thumbnail-form');
+    const videoThumbnailForm = document.getElementById('video-thumbnail-form');
 
     titleForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -106,7 +108,113 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('upload-result').textContent = `Failed to upload video: ${data.error}`;
         }
     });
+
+    // Custom thumbnail form handler
+    customThumbnailForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const title = document.getElementById('thumbnail-title').value;
+        const subtitle = document.getElementById('thumbnail-subtitle').value;
+        const template = document.getElementById('thumbnail-template').value;
+        
+        hideThumbnailElements();
+        
+        try {
+            const response = await fetch('/generate_custom_thumbnail', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({title: title, subtitle: subtitle, template: template})
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                showThumbnail(data.thumbnail);
+            } else {
+                showThumbnailError(data.error || 'Failed to generate custom thumbnail');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showThumbnailError('Error generating custom thumbnail. Please try again.');
+        }
+    });
+
+    // Video thumbnail form handler
+    videoThumbnailForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const videoFile = document.getElementById('video-file').files[0];
+        const title = document.getElementById('frame-title').value;
+        const timestamp = document.getElementById('timestamp').value;
+        
+        if (!videoFile) {
+            showThumbnailError('Please select a video file');
+            return;
+        }
+        
+        hideThumbnailElements();
+        
+        const formData = new FormData();
+        formData.append('video', videoFile);
+        formData.append('title', title);
+        if (timestamp) {
+            formData.append('timestamp', timestamp);
+        }
+        
+        try {
+            const response = await fetch('/generate_thumbnail_from_video', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+                showThumbnail(data.thumbnail);
+            } else {
+                showThumbnailError(data.error || 'Failed to generate thumbnail from video');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showThumbnailError('Error generating thumbnail from video. Please try again.');
+        }
+    });
+
+    // Download thumbnail button handler
+    document.getElementById('download-thumbnail').addEventListener('click', function() {
+        const img = document.getElementById('thumbnail-image');
+        const link = document.createElement('a');
+        link.href = img.src;
+        link.download = 'youtube-thumbnail.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
 });
+
+// Thumbnail helper functions
+function showThumbnail(base64Image) {
+    const thumbnailPreview = document.getElementById('thumbnail-preview');
+    const thumbnailImage = document.getElementById('thumbnail-image');
+    const thumbnailError = document.getElementById('thumbnail-error');
+    
+    thumbnailImage.src = `data:image/png;base64,${base64Image}`;
+    thumbnailPreview.style.display = 'block';
+    thumbnailError.style.display = 'none';
+}
+
+function showThumbnailError(errorMessage) {
+    const thumbnailPreview = document.getElementById('thumbnail-preview');
+    const thumbnailError = document.getElementById('thumbnail-error');
+    
+    thumbnailError.textContent = errorMessage;
+    thumbnailError.style.display = 'block';
+    thumbnailPreview.style.display = 'none';
+}
+
+function hideThumbnailElements() {
+    const thumbnailPreview = document.getElementById('thumbnail-preview');
+    const thumbnailError = document.getElementById('thumbnail-error');
+    
+    thumbnailPreview.style.display = 'none';
+    thumbnailError.style.display = 'none';
+}
 
 function updateHierarchyVisualization(number) {
     const visualization = document.getElementById('hierarchy-visualization');

@@ -13,4 +13,8 @@ dependencies = [
     "pydub>=0.25.1",
     "google-api-python-client>=2.149.0",
     "google-auth-oauthlib>=1.2.1",
+    "pillow>=11.3.0",
+    "opencv-python>=4.11.0.86",
+    "google-auth>=2.35.0",
+    "sqlalchemy>=2.0.35",
 ]
