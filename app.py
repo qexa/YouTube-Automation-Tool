@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
-from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video, extract_video_frame, create_thumbnail_from_frame, create_custom_thumbnail, thumbnail_to_base64, detect_language_from_audio, extract_audio_features, generate_video_tags, suggest_youtube_category, analyze_content_for_tags
+from utils import generate_title, transcribe_audio, enhance_description, assign_playlist, generate_hierarchical_number, upload_video, extract_video_frame, create_thumbnail_from_frame, create_custom_thumbnail, thumbnail_to_base64, detect_language_from_audio, extract_audio_features, generate_video_tags, suggest_youtube_category, analyze_content_for_tags, analyze_content_for_playlists
 
 class Base(DeclarativeBase):
     pass

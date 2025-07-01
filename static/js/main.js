@@ -1002,3 +1002,165 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Playlist Assignment helper functions
+function showPlaylistLoading(isLoading) {
+    const spinner = document.getElementById('playlist-spinner');
+    const submitBtn = document.querySelector('#playlist-form button[type="submit"]');
+    
+    if (isLoading) {
+        spinner.style.display = 'inline-block';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Assigning Playlist...';
+    } else {
+        spinner.style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" id="playlist-spinner" style="display: none;"></span>Assign Playlist';
+    }
+}
+
+function showPlaylistAnalysisLoading(isLoading) {
+    const spinner = document.getElementById('playlist-analysis-spinner');
+    const analyzeBtn = document.getElementById('analyze-playlist-content');
+    
+    if (isLoading) {
+        spinner.style.display = 'inline-block';
+        analyzeBtn.disabled = true;
+        analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyzing...';
+    } else {
+        spinner.style.display = 'none';
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" id="playlist-analysis-spinner" style="display: none;"></span>Analyze Content First';
+    }
+}
+
+function showPlaylistAnalysisResults(analysis) {
+    const analysisDiv = document.getElementById('playlist-analysis-results');
+    const contentDiv = document.getElementById('playlist-analysis-content');
+    
+    analysisDiv.style.display = 'block';
+    
+    contentDiv.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Content Keywords:</h6>
+                <div class="mb-2">
+                    ${analysis.keywords.map(keyword => `<span class="badge bg-primary me-1">${keyword}</span>`).join('')}
+                </div>
+                <h6>Content Topics:</h6>
+                <div class="mb-2">
+                    ${analysis.topics.map(topic => `<span class="badge bg-info me-1">${topic}</span>`).join('')}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6>Content Statistics:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Word Count:</strong> ${analysis.word_count}</li>
+                    <li><strong>Complexity Score:</strong> ${(analysis.complexity_score * 100).toFixed(1)}%</li>
+                    <li><strong>Primary Topic:</strong> ${analysis.primary_topic}</li>
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+function showPlaylistResults(assignment) {
+    const resultsDiv = document.getElementById('playlist-results');
+    const errorDiv = document.getElementById('playlist-error');
+    
+    // Hide error and show results
+    errorDiv.style.display = 'none';
+    resultsDiv.style.display = 'block';
+    
+    // Update primary playlist
+    const primaryDiv = document.getElementById('primary-playlist-content');
+    const primary = assignment.primary_playlist;
+    
+    primaryDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="mb-0">${primary.name}</h5>
+            <span class="badge bg-success">${primary.confidence}% confidence</span>
+        </div>
+        <p class="text-muted mb-2">${primary.description}</p>
+        <div class="mb-2">
+            <strong>SEO Tags:</strong>
+            ${primary.seo_tags.map(tag => `<span class="badge bg-secondary me-1">${tag}</span>`).join('')}
+        </div>
+        <div class="text-muted">
+            <small>Score: ${primary.score}</small>
+        </div>
+    `;
+    
+    // Update alternative playlists
+    const alternativesDiv = document.getElementById('alternative-playlists');
+    const alternativesContentDiv = document.getElementById('alternative-playlists-content');
+    
+    if (assignment.alternative_playlists && assignment.alternative_playlists.length > 0) {
+        alternativesDiv.style.display = 'block';
+        alternativesContentDiv.innerHTML = assignment.alternative_playlists.map(alt => `
+            <div class="border rounded p-2 mb-2">
+                <div class="d-flex justify-content-between">
+                    <strong>${alt.name}</strong>
+                    <span class="badge bg-outline-primary">${alt.confidence}% confidence</span>
+                </div>
+                <div class="mt-1">
+                    ${alt.seo_tags.map(tag => `<span class="badge bg-light text-dark me-1">${tag}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+    } else {
+        alternativesDiv.style.display = 'none';
+    }
+    
+    // Update SEO insights
+    const insightsDiv = document.getElementById('playlist-insights-content');
+    insightsDiv.innerHTML = `<p>${assignment.seo_insights}</p>`;
+    
+    // Update recommendations
+    const recommendationsDiv = document.getElementById('playlist-recommendations-content');
+    recommendationsDiv.innerHTML = `
+        <ul class="list-unstyled">
+            ${assignment.recommendations.map(rec => `<li>• ${rec}</li>`).join('')}
+        </ul>
+    `;
+}
+
+function showPlaylistError(errorMessage) {
+    const resultsDiv = document.getElementById('playlist-results');
+    const errorDiv = document.getElementById('playlist-error');
+    const analysisDiv = document.getElementById('playlist-analysis-results');
+    
+    resultsDiv.style.display = 'none';
+    analysisDiv.style.display = 'none';
+    errorDiv.style.display = 'block';
+    errorDiv.textContent = errorMessage;
+}
+
+function hidePlaylistResults() {
+    const resultsDiv = document.getElementById('playlist-results');
+    const errorDiv = document.getElementById('playlist-error');
+    
+    resultsDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+}
+
+function getPlaylistDataForExport() {
+    const resultsDiv = document.getElementById('playlist-results');
+    if (resultsDiv.style.display === 'none') {
+        return 'No playlist data available for export';
+    }
+    
+    // Extract playlist data from the displayed results
+    const primaryPlaylist = document.getElementById('primary-playlist-content').textContent;
+    const seoInsights = document.getElementById('playlist-insights-content').textContent;
+    const recommendations = document.getElementById('playlist-recommendations-content').textContent;
+    
+    const exportData = {
+        primary_playlist: primaryPlaylist.trim(),
+        seo_insights: seoInsights.trim(),
+        recommendations: recommendations.trim(),
+        exported_at: new Date().toISOString()
+    };
+    
+    return JSON.stringify(exportData, null, 2);
+}
