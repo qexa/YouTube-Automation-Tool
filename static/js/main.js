@@ -11,6 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
     titleForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const content = document.getElementById('title-content').value;
+        
+        // Show loading state
+        showTitleLoading(true);
+        hideTitleResults();
+        
         try {
             const response = await fetch('/generate_title', {
                 method: 'POST',
@@ -18,10 +23,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({content: content})
             });
             const data = await response.json();
-            document.getElementById('generated-title').textContent = data.title;
+            
+            if (data.success) {
+                showTitleResults(data);
+            } else {
+                showTitleError(data.error || 'Error generating titles');
+            }
         } catch (error) {
             console.error('Error:', error);
-            document.getElementById('generated-title').textContent = 'Error generating title. Please try again.';
+            showTitleError('Error generating titles. Please try again.');
+        } finally {
+            showTitleLoading(false);
         }
     });
 
@@ -416,6 +428,176 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+// Title Generation helper functions
+function showTitleLoading(isLoading) {
+    const spinner = document.getElementById('title-spinner');
+    const submitBtn = document.querySelector('#title-form button[type="submit"]');
+    
+    if (isLoading) {
+        spinner.style.display = 'inline-block';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating Titles...';
+    } else {
+        spinner.style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" id="title-spinner" style="display: none;"></span>Generate Titles';
+    }
+}
+
+function showTitleResults(data) {
+    const resultsDiv = document.getElementById('generated-title');
+    
+    let html = '<div class="mt-3">';
+    html += '<h4 class="text-success mb-3"><i class="bi bi-lightbulb"></i> Generated Title Variations</h4>';
+    
+    // Display title variations
+    html += '<div class="row">';
+    data.titles.forEach((title, index) => {
+        html += `
+            <div class="col-12 mb-3">
+                <div class="card border-info">
+                    <div class="card-body">
+                        <h6 class="card-subtitle mb-2 text-muted">Title Option ${index + 1}</h6>
+                        <h5 class="card-title">${title}</h5>
+                        <small class="text-muted">${title.length} characters</small>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-primary me-2" onclick="copyToClipboard('${title.replace(/'/g, "\\'")}', 'Title copied!')">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    // Display content analysis
+    if (data.analysis && Object.keys(data.analysis).length > 0) {
+        html += '<div class="mt-4">';
+        html += '<h5 class="text-info mb-3"><i class="bi bi-graph-up"></i> Content Analysis</h5>';
+        html += '<div class="row">';
+        
+        // Keywords
+        if (data.analysis.keywords && data.analysis.keywords.length > 0) {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">Key Terms</h6>
+                            <div class="d-flex flex-wrap gap-1">
+                                ${data.analysis.keywords.slice(0, 5).map(keyword => 
+                                    `<span class="badge bg-primary">${keyword}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Content metrics
+        html += `
+            <div class="col-md-6 mb-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">Content Metrics</h6>
+                        <small class="text-muted">
+                            Words: ${data.analysis.word_count || 0} | 
+                            Topic: ${data.analysis.primary_topic || 'General'} | 
+                            Type: ${data.analysis.content_type || 'Unknown'}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        html += '</div></div>';
+    }
+    
+    // Display recommendations
+    if (data.recommendations && data.recommendations.length > 0) {
+        html += '<div class="mt-4">';
+        html += '<h5 class="text-warning mb-3"><i class="bi bi-lightbulb"></i> Optimization Tips</h5>';
+        html += '<ul class="list-group list-group-flush">';
+        data.recommendations.forEach(rec => {
+            html += `<li class="list-group-item"><i class="bi bi-arrow-right text-warning me-2"></i>${rec}</li>`;
+        });
+        html += '</ul></div>';
+    }
+    
+    // Action buttons
+    html += `
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+            <button class="btn btn-success" onclick="copyAllTitles()">
+                <i class="bi bi-clipboard-check"></i> Copy All Titles
+            </button>
+            <button class="btn btn-info" onclick="exportTitleData()">
+                <i class="bi bi-download"></i> Export as Text
+            </button>
+        </div>
+    `;
+    
+    html += '</div>';
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+}
+
+function showTitleError(errorMessage) {
+    const resultsDiv = document.getElementById('generated-title');
+    resultsDiv.innerHTML = `
+        <div class="alert alert-danger mt-3">
+            <i class="bi bi-exclamation-triangle"></i> Error: ${errorMessage}
+        </div>
+    `;
+    resultsDiv.style.display = 'block';
+}
+
+function hideTitleResults() {
+    const resultsDiv = document.getElementById('generated-title');
+    resultsDiv.style.display = 'none';
+    resultsDiv.innerHTML = '';
+}
+
+function copyAllTitles() {
+    const titles = Array.from(document.querySelectorAll('#generated-title .card-title'))
+        .map(el => el.textContent)
+        .join('\n\n');
+    
+    copyToClipboard(titles, 'All titles copied to clipboard!');
+}
+
+function exportTitleData() {
+    const titleElements = document.querySelectorAll('#generated-title .card-title');
+    const analysisText = document.querySelector('#generated-title .text-info')?.textContent || '';
+    const recommendations = Array.from(document.querySelectorAll('#generated-title .list-group-item'))
+        .map(el => el.textContent.replace('→', '•'))
+        .join('\n');
+    
+    let content = 'GENERATED YOUTUBE TITLES\n';
+    content += '========================\n\n';
+    
+    titleElements.forEach((titleEl, index) => {
+        content += `${index + 1}. ${titleEl.textContent}\n`;
+    });
+    
+    if (analysisText) {
+        content += '\nCONTENT ANALYSIS\n';
+        content += '================\n';
+        content += analysisText + '\n';
+    }
+    
+    if (recommendations) {
+        content += '\nOPTIMIZATION RECOMMENDATIONS\n';
+        content += '============================\n';
+        content += recommendations + '\n';
+    }
+    
+    content += '\nGenerated by YouTube Video Automation Tool\n';
+    
+    downloadAsFile(content, 'youtube_titles.txt', 'text/plain');
+}
 
     // Content analysis button
     document.getElementById('analyze-tags-btn').addEventListener('click', async function() {

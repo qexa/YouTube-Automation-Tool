@@ -28,9 +28,26 @@ def index():
 
 @app.route('/generate_title', methods=['POST'])
 def generate_title_route():
-    content = request.json['content']
-    title = generate_title(content)
-    return jsonify({"title": title})
+    try:
+        content = request.json['content']
+        title_options = request.json.get('options', {})
+        
+        result = generate_title(content, title_options)
+        
+        return jsonify({
+            "success": True,
+            "titles": result['titles'],
+            "analysis": result['analysis'],
+            "recommendations": result['recommendations']
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "titles": ["Error generating titles"],
+            "analysis": {},
+            "recommendations": []
+        })
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe_route():

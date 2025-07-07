@@ -10,7 +10,10 @@
             <label for="title-content" class="form-label">Video Content</label>
             <textarea class="form-control" id="title-content" rows="3" required></textarea>
         </div>
-        <button type="submit" class="btn btn-primary">Generate Title</button>
+        <button type="submit" class="btn btn-primary">
+            <span class="spinner-border spinner-border-sm me-2" id="title-spinner" style="display: none;"></span>
+            Generate Titles
+        </button>
     </form>
     <div id="generated-title" class="result-box"></div>
 </div>

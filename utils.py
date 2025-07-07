@@ -24,18 +24,186 @@ try:
 except Exception as e:
     print(f"Error downloading NLTK data: {str(e)}")
 
-def generate_title(content):
+def generate_title(content, title_options=None):
+    """Generate compelling YouTube-optimized titles with multiple variations"""
     try:
-        words = word_tokenize(content.lower())
-        stop_words = set(stopwords.words('english'))
-        filtered_words = [word for word in words if word.isalnum() and word not in stop_words]
-        word_freq = nltk.FreqDist(filtered_words)
-        common_words = word_freq.most_common(3)
-        title = " ".join(word for word, _ in common_words).capitalize()
-        return title
+        if title_options is None:
+            title_options = {}
+        
+        # Extract key information from content
+        analysis = analyze_content_for_title_generation(content)
+        
+        # Generate multiple title variations
+        titles = []
+        
+        # Power words for engagement
+        power_words = [
+            "Ultimate", "Complete", "Advanced", "Beginner's", "Pro", "Secret", 
+            "Hidden", "Amazing", "Incredible", "Shocking", "Essential", "Must-Know",
+            "Game-Changing", "Revolutionary", "Mind-Blowing", "Epic", "Master"
+        ]
+        
+        # Question words for curiosity
+        question_starters = [
+            "How to", "Why", "What", "When", "Where", "Which", "Can You"
+        ]
+        
+        # Emotional triggers
+        emotional_words = [
+            "Transformative", "Life-Changing", "Inspiring", "Motivational",
+            "Breakthrough", "Powerful", "Effective", "Proven", "Guaranteed"
+        ]
+        
+        # Generate different title styles
+        keywords = analysis['keywords'][:3]
+        primary_topic = analysis.get('primary_topic', '')
+        entities = analysis.get('entities', [])
+        
+        # Style 1: How-To Format
+        if keywords:
+            main_keyword = keywords[0].title()
+            titles.append(f"How to {main_keyword} - Complete Guide for Beginners")
+            titles.append(f"Ultimate {main_keyword} Tutorial: Step-by-Step Guide")
+        
+        # Style 2: Listicle Format
+        if len(keywords) >= 2:
+            titles.append(f"Top 10 {keywords[0].title()} Tips Every {primary_topic.title()} Expert Uses")
+            titles.append(f"5 Essential {keywords[0].title()} Strategies That Actually Work")
+        
+        # Style 3: Problem-Solution Format
+        if keywords:
+            titles.append(f"Why Your {keywords[0].title()} Isn't Working (And How to Fix It)")
+            titles.append(f"The #{1} Mistake People Make with {keywords[0].title()}")
+        
+        # Style 4: Authority/Expert Format
+        if entities and keywords:
+            titles.append(f"{entities[0]} Reveals: Master {keywords[0].title()} in 30 Days")
+            titles.append(f"Pro {keywords[0].title()} Secrets the Experts Don't Want You to Know")
+        
+        # Style 5: Curiosity/Mystery Format
+        if keywords:
+            power_word = random.choice(power_words)
+            titles.append(f"This {power_word} {keywords[0].title()} Trick Will Change Everything")
+            titles.append(f"What {keywords[0].title()} Pros Don't Tell You About Success")
+        
+        # Style 6: Time-Sensitive Format
+        if keywords:
+            titles.append(f"Learn {keywords[0].title()} in Under 20 Minutes")
+            titles.append(f"Quick {keywords[0].title()} Guide: Results in Just 1 Week")
+        
+        # Style 7: Comparison Format
+        if len(keywords) >= 2:
+            titles.append(f"{keywords[0].title()} vs {keywords[1].title()}: Which is Better?")
+            titles.append(f"Choosing Between {keywords[0].title()} and {keywords[1].title()}")
+        
+        # If no good titles generated, create a fallback
+        if not titles and keywords:
+            titles.append(f"Complete Guide to {keywords[0].title()}")
+            titles.append(f"Everything You Need to Know About {keywords[0].title()}")
+        
+        # Select best titles (remove duplicates and empty ones)
+        unique_titles = list(set([title for title in titles if title and len(title) <= 100]))
+        
+        # Return top 5 titles with analysis
+        return {
+            'titles': unique_titles[:5] if unique_titles else ["Engaging Video Content - Complete Guide"],
+            'analysis': analysis,
+            'recommendations': generate_title_recommendations(analysis, unique_titles[:5] if unique_titles else [])
+        }
+        
     except Exception as e:
         print(f"Error generating title: {str(e)}")
-        return "Unable to generate title"
+        return {
+            'titles': ["Engaging Video Content"],
+            'analysis': {'error': str(e)},
+            'recommendations': []
+        }
+
+def analyze_content_for_title_generation(content):
+    """Analyze content specifically for title generation"""
+    try:
+        # Tokenize and process
+        words = word_tokenize(content.lower())
+        sentences = sent_tokenize(content)
+        
+        # Remove stop words and extract keywords
+        stop_words = set(stopwords.words('english'))
+        filtered_words = [word for word in words if word.isalnum() and word not in stop_words and len(word) > 2]
+        
+        # Get word frequency
+        word_freq = nltk.FreqDist(filtered_words)
+        keywords = [word for word, _ in word_freq.most_common(10)]
+        
+        # Extract named entities (simplified)
+        entities = extract_named_entities(content)
+        
+        # Determine primary topic
+        primary_topic = categorize_content(content)[0] if categorize_content(content) else 'general'
+        
+        # Content metrics
+        word_count = len(words)
+        sentence_count = len(sentences)
+        avg_sentence_length = word_count / sentence_count if sentence_count > 0 else 0
+        
+        return {
+            'keywords': keywords,
+            'entities': entities[:3],  # Top 3 entities
+            'primary_topic': primary_topic,
+            'word_count': word_count,
+            'sentence_count': sentence_count,
+            'avg_sentence_length': round(avg_sentence_length, 1),
+            'content_type': determine_content_type(content)
+        }
+        
+    except Exception as e:
+        return {
+            'keywords': [],
+            'entities': [],
+            'primary_topic': 'general',
+            'word_count': 0,
+            'sentence_count': 0,
+            'avg_sentence_length': 0,
+            'content_type': 'unknown',
+            'error': str(e)
+        }
+
+def generate_title_recommendations(analysis, titles):
+    """Generate optimization recommendations for titles"""
+    recommendations = []
+    
+    try:
+        # Check title length optimization
+        for title in titles:
+            if len(title) > 60:
+                recommendations.append("Consider shorter titles (under 60 characters) for better mobile display")
+                break
+        
+        # Check for power words
+        power_words_used = any(word in ' '.join(titles).lower() for word in ['ultimate', 'complete', 'secret', 'amazing', 'how to'])
+        if not power_words_used:
+            recommendations.append("Add power words like 'Ultimate', 'Complete', or 'Secret' to increase engagement")
+        
+        # Check for numbers
+        has_numbers = any(char.isdigit() for char in ' '.join(titles))
+        if not has_numbers:
+            recommendations.append("Include specific numbers (e.g., '5 Tips', '10 Ways') to improve click-through rates")
+        
+        # Check for emotional triggers
+        emotional_words = ['amazing', 'incredible', 'shocking', 'life-changing', 'revolutionary']
+        has_emotional = any(word in ' '.join(titles).lower() for word in emotional_words)
+        if not has_emotional:
+            recommendations.append("Consider adding emotional trigger words to create stronger viewer connection")
+        
+        # Topic-specific recommendations
+        if analysis.get('primary_topic') == 'technology':
+            recommendations.append("For tech content, include version numbers or specific tool names in titles")
+        elif analysis.get('primary_topic') == 'education':
+            recommendations.append("Educational content performs well with 'Learn', 'Master', or 'Course' in titles")
+        
+        return recommendations[:4]  # Return top 4 recommendations
+        
+    except Exception as e:
+        return [f"Error generating recommendations: {str(e)}"]
 
 def transcribe_audio(audio_file, language='en-US', enable_confidence=True):
     """Enhanced audio transcription with confidence scores and language support"""
