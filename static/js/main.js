@@ -462,7 +462,7 @@ function showTitleResults(data) {
                         <h5 class="card-title">${title}</h5>
                         <small class="text-muted">${title.length} characters</small>
                         <div class="mt-2">
-                            <button class="btn btn-sm btn-outline-primary me-2" onclick="copyToClipboard('${title.replace(/'/g, "\\'")}', 'Title copied!')">
+                            <button class="btn btn-sm btn-outline-primary me-2" onclick="copyToClipboard(\`${title}\`, 'Title copied!')">
                                 <i class="bi bi-clipboard"></i> Copy
                             </button>
                         </div>
@@ -516,7 +516,25 @@ function showTitleResults(data) {
         html += '</div></div>';
     }
     
-    // Display recommendations
+    // Display engagement insights
+    if (data.engagement_insights && data.engagement_insights.length > 0) {
+        html += '<div class="mt-4">';
+        html += '<h5 class="text-success mb-3"><i class="bi bi-graph-up-arrow"></i> Engagement Insights</h5>';
+        html += '<div class="row">';
+        data.engagement_insights.forEach(insight => {
+            html += `
+                <div class="col-12 mb-2">
+                    <div class="alert alert-success d-flex align-items-center" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        <div>${insight}</div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div></div>';
+    }
+    
+    // Display optimization recommendations
     if (data.recommendations && data.recommendations.length > 0) {
         html += '<div class="mt-4">';
         html += '<h5 class="text-warning mb-3"><i class="bi bi-lightbulb"></i> Optimization Tips</h5>';

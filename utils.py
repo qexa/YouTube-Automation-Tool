@@ -25,7 +25,7 @@ except Exception as e:
     print(f"Error downloading NLTK data: {str(e)}")
 
 def generate_title(content, title_options=None):
-    """Generate compelling YouTube-optimized titles with multiple variations"""
+    """Generate compelling YouTube-optimized titles with multiple variations for maximum engagement"""
     try:
         if title_options is None:
             title_options = {}
@@ -36,88 +36,320 @@ def generate_title(content, title_options=None):
         # Generate multiple title variations
         titles = []
         
-        # Power words for engagement
-        power_words = [
-            "Ultimate", "Complete", "Advanced", "Beginner's", "Pro", "Secret", 
-            "Hidden", "Amazing", "Incredible", "Shocking", "Essential", "Must-Know",
-            "Game-Changing", "Revolutionary", "Mind-Blowing", "Epic", "Master"
+        # Enhanced power words for maximum engagement
+        power_words = {
+            'curiosity': ["Secret", "Hidden", "Forbidden", "Exposed", "Revealed", "Uncovered", "Behind-the-Scenes"],
+            'urgency': ["Now", "Today", "Immediately", "Right Now", "Instantly", "Fast", "Quick"],
+            'authority': ["Expert", "Pro", "Master", "Guru", "Professional", "Advanced", "Elite"],
+            'emotion': ["Amazing", "Incredible", "Shocking", "Mind-Blowing", "Jaw-Dropping", "Unbelievable", "Stunning"],
+            'value': ["Ultimate", "Complete", "Perfect", "Best", "Top", "Premium", "Exclusive", "Essential"],
+            'transformation': ["Revolutionary", "Game-Changing", "Life-Changing", "Breakthrough", "Powerful", "Epic"]
+        }
+        
+        # Viral title patterns that drive engagement
+        viral_patterns = [
+            "This {emotion} {keyword} Trick Will {benefit}",
+            "Why Everyone is {action} with {keyword} (You Should Too!)",
+            "The {authority} {keyword} Method That {result}",
+            "{number} {keyword} Secrets That Will {transformation}",
+            "What Happens When You {action} {keyword} for {timeframe}",
+            "I Tried {keyword} for {timeframe} - Here's What Happened",
+            "The Dark Truth About {keyword} Nobody Talks About",
+            "{keyword}: From {before_state} to {after_state} in {timeframe}"
         ]
         
-        # Question words for curiosity
-        question_starters = [
-            "How to", "Why", "What", "When", "Where", "Which", "Can You"
-        ]
-        
-        # Emotional triggers
-        emotional_words = [
-            "Transformative", "Life-Changing", "Inspiring", "Motivational",
-            "Breakthrough", "Powerful", "Effective", "Proven", "Guaranteed"
-        ]
-        
-        # Generate different title styles
-        keywords = analysis['keywords'][:3]
-        primary_topic = analysis.get('primary_topic', '')
+        # Extract content insights
+        keywords = analysis['keywords'][:5] if analysis['keywords'] else ['content']
+        primary_topic = analysis.get('primary_topic', 'general')
         entities = analysis.get('entities', [])
+        content_type = analysis.get('content_type', 'tutorial')
         
-        # Style 1: How-To Format
-        if keywords:
-            main_keyword = keywords[0].title()
-            titles.append(f"How to {main_keyword} - Complete Guide for Beginners")
-            titles.append(f"Ultimate {main_keyword} Tutorial: Step-by-Step Guide")
+        # Identify the main topic phrase for better titles
+        main_topic = identify_main_topic(keywords, primary_topic, content)
         
-        # Style 2: Listicle Format
-        if len(keywords) >= 2:
-            titles.append(f"Top 10 {keywords[0].title()} Tips Every {primary_topic.title()} Expert Uses")
-            titles.append(f"5 Essential {keywords[0].title()} Strategies That Actually Work")
+        # Generate engagement-focused titles using different strategies
         
-        # Style 3: Problem-Solution Format
-        if keywords:
-            titles.append(f"Why Your {keywords[0].title()} Isn't Working (And How to Fix It)")
-            titles.append(f"The #{1} Mistake People Make with {keywords[0].title()}")
+        # 1. Curiosity-driven titles (highest engagement)
+        if main_topic:
+            secret_word = random.choice(power_words['curiosity'])
+            emotion_word = random.choice(power_words['emotion'])
+            titles.extend([
+                f"The {secret_word} {main_topic} Method That Changed Everything",
+                f"{emotion_word} {main_topic} Technique Everyone's Talking About",
+                f"What They Don't Want You to Know About {main_topic}"
+            ])
         
-        # Style 4: Authority/Expert Format
-        if entities and keywords:
-            titles.append(f"{entities[0]} Reveals: Master {keywords[0].title()} in 30 Days")
-            titles.append(f"Pro {keywords[0].title()} Secrets the Experts Don't Want You to Know")
+        # 2. Problem-solution with emotional hooks
+        if main_topic:
+            titles.extend([
+                f"Struggling with {main_topic}? This Method Works in Minutes",
+                f"Why Your {main_topic} Strategy Fails (And How to Fix It)",
+                f"From {main_topic} Beginner to {main_topic} Success Story"
+            ])
         
-        # Style 5: Curiosity/Mystery Format
-        if keywords:
-            power_word = random.choice(power_words)
-            titles.append(f"This {power_word} {keywords[0].title()} Trick Will Change Everything")
-            titles.append(f"What {keywords[0].title()} Pros Don't Tell You About Success")
+        # 3. Achievement and transformation stories
+        if main_topic:
+            transform_word = random.choice(power_words['transformation'])
+            titles.extend([
+                f"How I Mastered {main_topic} in 30 Days (Step-by-Step)",
+                f"My {transform_word} {main_topic} Journey: Before vs After",
+                f"Zero to {main_topic} Hero: The Complete Transformation"
+            ])
         
-        # Style 6: Time-Sensitive Format
-        if keywords:
-            titles.append(f"Learn {keywords[0].title()} in Under 20 Minutes")
-            titles.append(f"Quick {keywords[0].title()} Guide: Results in Just 1 Week")
+        # 4. Competitive and comparison titles
+        if main_topic and len(keywords) >= 2:
+            alt_topic = keywords[1].title() if keywords[1] != keywords[0] else f"{main_topic} Strategies"
+            titles.extend([
+                f"{main_topic} vs Traditional Methods: The Ultimate Showdown",
+                f"Which Works Better: {main_topic} or Old-School Tactics? (Surprising Results)",
+                f"I Tested {main_topic} vs Competition - You Won't Believe the Winner"
+            ])
         
-        # Style 7: Comparison Format
-        if len(keywords) >= 2:
-            titles.append(f"{keywords[0].title()} vs {keywords[1].title()}: Which is Better?")
-            titles.append(f"Choosing Between {keywords[0].title()} and {keywords[1].title()}")
+        # 5. List-based with emotional amplifiers
+        if main_topic:
+            numbers = [5, 7, 10, 15, 20]
+            number = random.choice(numbers)
+            emotion = random.choice(power_words['emotion'])
+            titles.extend([
+                f"{number} {emotion} {main_topic} Tips That Actually Work",
+                f"Top {number} {main_topic} Mistakes Killing Your Results",
+                f"{number} Mind-Blowing {main_topic} Hacks for Instant Success"
+            ])
         
-        # If no good titles generated, create a fallback
-        if not titles and keywords:
-            titles.append(f"Complete Guide to {keywords[0].title()}")
-            titles.append(f"Everything You Need to Know About {keywords[0].title()}")
+        # 6. Time-sensitive and urgency-driven
+        if main_topic:
+            urgency_word = random.choice(power_words['urgency'])
+            timeframes = ["24 Hours", "1 Week", "30 Days", "This Month"]
+            timeframe = random.choice(timeframes)
+            titles.extend([
+                f"Master {main_topic} {urgency_word} - Complete Guide for {timeframe}",
+                f"Learn {main_topic} in {timeframe} or Get Your Money Back",
+                f"{urgency_word}: The {main_topic} Strategy Taking Over {primary_topic.title()}"
+            ])
         
-        # Select best titles (remove duplicates and empty ones)
-        unique_titles = list(set([title for title in titles if title and len(title) <= 100]))
+        # 7. Authority and credibility-based
+        if main_topic:
+            authority_word = random.choice(power_words['authority'])
+            entity = entities[0] if entities else f"{primary_topic.title()} Expert"
+            titles.extend([
+                f"{authority_word} {entity} Reveals: The Real {main_topic} Method",
+                f"Industry {authority_word} Shares {main_topic} Secrets",
+                f"{entity}'s {main_topic} System That Beats Everything Else"
+            ])
         
-        # Return top 5 titles with analysis
+        # 8. Controversy and debate starters
+        if main_topic:
+            titles.extend([
+                f"Is {main_topic} Worth It? Honest Review After 1 Year",
+                f"The {main_topic} Debate: Why Experts Are Divided",
+                f"Controversial: Why Most {main_topic} Advice is Wrong"
+            ])
+        
+        # Filter and optimize titles
+        unique_titles = []
+        for title in titles:
+            if title and len(title) <= 100 and title not in unique_titles:
+                # Optimize title for engagement
+                optimized_title = optimize_title_for_engagement(title)
+                unique_titles.append(optimized_title)
+        
+        # Sort by engagement potential and return top titles
+        scored_titles = score_titles_for_engagement(unique_titles, analysis)
+        final_titles = [title for title, score in scored_titles[:8]]  # Top 8 titles
+        
         return {
-            'titles': unique_titles[:5] if unique_titles else ["Engaging Video Content - Complete Guide"],
+            'titles': final_titles if final_titles else ["Incredible Content That Will Transform Your Perspective"],
             'analysis': analysis,
-            'recommendations': generate_title_recommendations(analysis, unique_titles[:5] if unique_titles else [])
+            'recommendations': generate_title_recommendations(analysis, final_titles),
+            'engagement_insights': generate_engagement_insights(scored_titles[:8])
         }
         
     except Exception as e:
         print(f"Error generating title: {str(e)}")
         return {
-            'titles': ["Engaging Video Content"],
+            'titles': ["Amazing Content You Need to See"],
             'analysis': {'error': str(e)},
-            'recommendations': []
+            'recommendations': [],
+            'engagement_insights': []
         }
+
+def identify_main_topic(keywords, primary_topic, content):
+    """Identify the main topic phrase for compelling titles"""
+    if not keywords:
+        return "Amazing Content"
+    
+    # Define topic-specific combinations
+    topic_combinations = {
+        'business': ['online business', 'digital marketing', 'business growth', 'profitable business', 'business strategies'],
+        'technology': ['programming', 'web development', 'software development', 'tech tutorials', 'coding skills'],
+        'education': ['learning strategies', 'study methods', 'educational content', 'skill building', 'knowledge mastery'],
+        'lifestyle': ['life hacks', 'productivity tips', 'wellness strategies', 'lifestyle changes', 'personal growth'],
+        'entertainment': ['entertainment content', 'creative projects', 'fun activities', 'viral content', 'engaging material'],
+        'science': ['scientific methods', 'research techniques', 'data analysis', 'scientific discoveries', 'innovation'],
+        'creative': ['creative processes', 'artistic techniques', 'design methods', 'creative projects', 'artistic expression']
+    }
+    
+    # Look for specific combinations based on content
+    content_lower = content.lower()
+    
+    # Business-related topics
+    if any(word in keywords for word in ['business', 'marketing', 'sales', 'profitable', 'online', 'digital']):
+        if 'online' in keywords and 'business' in keywords:
+            return "Online Business"
+        elif 'digital' in keywords and 'marketing' in keywords:
+            return "Digital Marketing"
+        elif 'profitable' in keywords and 'business' in keywords:
+            return "Profitable Business"
+        elif 'business' in keywords:
+            return "Business Growth"
+        elif 'marketing' in keywords:
+            return "Marketing Strategy"
+    
+    # Technology topics
+    if any(word in keywords for word in ['programming', 'coding', 'development', 'software', 'tech', 'python', 'javascript']):
+        if 'programming' in keywords or 'coding' in keywords:
+            return "Programming"
+        elif 'development' in keywords:
+            return "Development"
+        else:
+            return "Tech Skills"
+    
+    # Education topics
+    if any(word in keywords for word in ['learn', 'tutorial', 'guide', 'education', 'teaching', 'study']):
+        if 'tutorial' in keywords:
+            return "Tutorial"
+        elif 'learn' in keywords:
+            return "Learning"
+        else:
+            return "Education"
+    
+    # Fitness/Health topics
+    if any(word in keywords for word in ['fitness', 'health', 'workout', 'exercise', 'nutrition']):
+        return "Fitness"
+    
+    # Creative topics
+    if any(word in keywords for word in ['creative', 'design', 'art', 'music', 'video', 'content']):
+        if 'content' in keywords:
+            return "Content Creation"
+        else:
+            return "Creative Projects"
+    
+    # Default to combining top keywords meaningfully
+    if len(keywords) >= 2:
+        # Create meaningful combinations
+        first_keyword = keywords[0].title()
+        second_keyword = keywords[1].title()
+        
+        # Check if they form a natural phrase
+        natural_phrases = [
+            f"{first_keyword} {second_keyword}",
+            f"{first_keyword} Strategy",
+            f"{first_keyword} Mastery",
+            f"{first_keyword} Success"
+        ]
+        
+        # Return the most natural sounding phrase
+        return natural_phrases[0] if len(f"{first_keyword} {second_keyword}") <= 25 else f"{first_keyword} Mastery"
+    
+    # Single keyword fallback
+    return keywords[0].title() if keywords else "Amazing Content"
+
+def create_keyword_phrase(keywords):
+    """Create a natural phrase from keywords (legacy function)"""
+    return identify_main_topic(keywords, 'general', ' '.join(keywords))
+
+def optimize_title_for_engagement(title):
+    """Optimize individual title for maximum engagement"""
+    # Capitalize first letter of each major word
+    words = title.split()
+    optimized_words = []
+    
+    for word in words:
+        # Keep certain words lowercase unless they're the first word
+        if word.lower() in ['a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with'] and len(optimized_words) > 0:
+            optimized_words.append(word.lower())
+        else:
+            optimized_words.append(word.capitalize())
+    
+    optimized_title = ' '.join(optimized_words)
+    
+    # Ensure proper punctuation for engagement
+    if not optimized_title.endswith(('!', '?', ')')):
+        if any(word in optimized_title.lower() for word in ['how', 'why', 'what', 'when', 'where', 'which']):
+            optimized_title += '?'
+        elif any(word in optimized_title.lower() for word in ['amazing', 'incredible', 'shocking', 'unbelievable']):
+            optimized_title += '!'
+    
+    return optimized_title
+
+def score_titles_for_engagement(titles, analysis):
+    """Score titles based on engagement potential"""
+    scored_titles = []
+    
+    high_engagement_words = [
+        'secret', 'hidden', 'revealed', 'exposed', 'shocking', 'amazing', 'incredible',
+        'unbelievable', 'mind-blowing', 'game-changing', 'ultimate', 'complete',
+        'versus', 'vs', 'battle', 'showdown', 'truth', 'honest', 'real'
+    ]
+    
+    emotional_triggers = [
+        'you won\'t believe', 'will change everything', 'nobody talks about',
+        'changed my life', 'transformed', 'breakthrough', 'revolutionary'
+    ]
+    
+    for title in titles:
+        score = 0
+        title_lower = title.lower()
+        
+        # Score based on engagement elements
+        score += sum(5 for word in high_engagement_words if word in title_lower)
+        score += sum(8 for trigger in emotional_triggers if trigger in title_lower)
+        score += 3 if any(char.isdigit() for char in title) else 0  # Numbers boost engagement
+        score += 2 if title.endswith('!') else 0
+        score += 1 if title.endswith('?') else 0
+        score += 2 if '(' in title and ')' in title else 0  # Parentheses add intrigue
+        score += 1 if ':' in title else 0  # Colons create structure
+        
+        # Penalize overly long titles
+        if len(title) > 80:
+            score -= 3
+        
+        # Bonus for optimal length (50-70 characters)
+        if 50 <= len(title) <= 70:
+            score += 2
+        
+        scored_titles.append((title, score))
+    
+    # Sort by score (highest first)
+    return sorted(scored_titles, key=lambda x: x[1], reverse=True)
+
+def generate_engagement_insights(scored_titles):
+    """Generate insights about title engagement potential"""
+    insights = []
+    
+    if scored_titles:
+        best_title, best_score = scored_titles[0]
+        
+        insights.append(f"Highest engagement potential: '{best_title}' (Score: {best_score})")
+        
+        # Analyze what makes titles engaging
+        high_scoring = [title for title, score in scored_titles if score >= 10]
+        if high_scoring:
+            insights.append(f"{len(high_scoring)} titles have high engagement potential")
+        
+        # Check for emotional triggers
+        emotional_count = sum(1 for title, _ in scored_titles if any(trigger in title.lower() 
+                            for trigger in ['amazing', 'incredible', 'shocking', 'secret', 'revealed']))
+        if emotional_count > 0:
+            insights.append(f"{emotional_count} titles use emotional triggers for better engagement")
+        
+        # Check for curiosity gaps
+        curiosity_count = sum(1 for title, _ in scored_titles if title.endswith('?') or 
+                            any(word in title.lower() for word in ['why', 'what', 'how', 'which']))
+        if curiosity_count > 0:
+            insights.append(f"{curiosity_count} titles create curiosity gaps to drive clicks")
+    
+    return insights[:4]  # Return top 4 insights
 
 def analyze_content_for_title_generation(content):
     """Analyze content specifically for title generation"""

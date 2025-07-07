@@ -38,7 +38,8 @@ def generate_title_route():
             "success": True,
             "titles": result['titles'],
             "analysis": result['analysis'],
-            "recommendations": result['recommendations']
+            "recommendations": result['recommendations'],
+            "engagement_insights": result.get('engagement_insights', [])
         })
     except Exception as e:
         return jsonify({
