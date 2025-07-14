@@ -137,31 +137,101 @@
 </div>
 
 <div class="form-section">
-    <h2>Description Enhancement</h2>
-    <form id="description-form">
-        <div class="mb-3">
-            <label for="description-content" class="form-label">Original Description</label>
-            <textarea class="form-control" id="description-content" rows="4" required placeholder="Enter your video description here..."></textarea>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Description Enhancement</h2>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="template-btn">📋 Templates</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="import-transcript-btn">📥 Import Transcript</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="seo-suggestions-btn">🎯 SEO Tips</button>
         </div>
-        <div class="mb-3">
-            <label for="video-content" class="form-label">Video Content/Transcript</label>
-            <textarea class="form-control" id="video-content" rows="4" required placeholder="Describe what happens in your video or paste transcript..."></textarea>
+    </div>
+
+    <!-- Template Selection Modal-like Dropdown -->
+    <div id="template-dropdown" class="card mb-3" style="display: none;">
+        <div class="card-header">
+            <h6 class="mb-0">Choose a Template</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="tutorial">
+                        🎓 Tutorial/How-To
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="review">
+                        ⭐ Product Review
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="vlog">
+                        📹 Vlog/Personal
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="educational">
+                        📚 Educational
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="gaming">
+                        🎮 Gaming
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="business">
+                        💼 Business/Finance
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="entertainment">
+                        🎬 Entertainment
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="tech">
+                        💻 Technology
+                    </button>
+                    <button class="btn btn-outline-primary btn-sm w-100 mb-2 template-option" data-template="fitness">
+                        💪 Health/Fitness
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form id="description-form">
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="mb-3">
+                    <label for="description-content" class="form-label">Original Description</label>
+                    <textarea class="form-control" id="description-content" rows="6" required placeholder="Enter your video description here..."></textarea>
+                    <div class="form-text">
+                        <span id="char-count">0</span>/5000 characters • 
+                        <span id="word-count">0</span> words • 
+                        <span class="badge" id="readability-score">Readability: Good</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="mb-3">
+                    <label for="video-content" class="form-label">Video Content/Transcript</label>
+                    <textarea class="form-control" id="video-content" rows="6" required placeholder="Describe what happens in your video or paste transcript..."></textarea>
+                    <div class="form-text">
+                        <small class="text-muted">💡 Tip: More detailed content = better description enhancement</small>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Enhancement Options -->
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Enhancement Options</h5>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="reset-options">🔄 Reset</button>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-lg-3">
                         <div class="mb-3">
                             <label for="target-audience" class="form-label">Target Audience</label>
                             <select class="form-select" id="target-audience">
                                 <option value="general">General Audience</option>
                                 <option value="educational">Educational/Learning</option>
                                 <option value="professional">Professional/Business</option>
+                                <option value="beginner">Beginner/Novice</option>
+                                <option value="advanced">Advanced/Expert</option>
+                                <option value="teens">Teens/Young Adults</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -175,43 +245,188 @@
                                 <option value="entertainment">Entertainment</option>
                                 <option value="science">Science</option>
                                 <option value="creative">Creative</option>
+                                <option value="gaming">Gaming</option>
+                                <option value="sports">Sports/Fitness</option>
+                                <option value="travel">Travel</option>
+                                <option value="cooking">Food/Cooking</option>
                             </select>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-lg-3">
                         <div class="mb-3">
-                            <label class="form-label">Include Sections:</label>
+                            <label class="form-label">Content Sections:</label>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="include-seo" checked>
-                                <label class="form-check-label" for="include-seo">SEO Optimization</label>
+                                <label class="form-check-label" for="include-seo">🎯 SEO Optimization</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="include-hashtags" checked>
-                                <label class="form-check-label" for="include-hashtags">Relevant Hashtags</label>
+                                <label class="form-check-label" for="include-hashtags">#️⃣ Trending Hashtags</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="include-cta" checked>
-                                <label class="form-check-label" for="include-cta">Call-to-Action</label>
+                                <label class="form-check-label" for="include-cta">📢 Call-to-Action</label>
                             </div>
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="include-social" checked>
-                                <label class="form-check-label" for="include-social">Social Media Links</label>
+                                <label class="form-check-label" for="include-social">🔗 Social Media Links</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="mb-3">
+                            <label class="form-label">Advanced Features:</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-timestamps">
+                                <label class="form-check-label" for="include-timestamps">⏰ Auto Timestamps</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-chapters">
+                                <label class="form-check-label" for="include-chapters">📖 Video Chapters</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-resources">
+                                <label class="form-check-label" for="include-resources">📚 Resource Links</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="include-emojis">
+                                <label class="form-check-label" for="include-emojis">😊 Smart Emojis</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3">
+                        <div class="mb-3">
+                            <label for="description-length" class="form-label">Description Length</label>
+                            <select class="form-select" id="description-length">
+                                <option value="short">Short (300-500 words)</option>
+                                <option value="medium" selected>Medium (500-800 words)</option>
+                                <option value="long">Long (800-1200 words)</option>
+                                <option value="detailed">Very Detailed (1200+ words)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="writing-tone" class="form-label">Writing Tone</label>
+                            <select class="form-select" id="writing-tone">
+                                <option value="friendly">Friendly & Casual</option>
+                                <option value="professional">Professional</option>
+                                <option value="enthusiastic">Enthusiastic</option>
+                                <option value="authoritative">Authoritative</option>
+                                <option value="conversational">Conversational</option>
+                                <option value="educational">Educational</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- SEO Suggestions Panel -->
+                <div id="seo-suggestions-panel" class="mt-3" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6>🎯 SEO Optimization Tips:</h6>
+                        <ul class="mb-0">
+                            <li>Include your main keyword in the first 125 characters</li>
+                            <li>Use 3-5 relevant hashtags maximum</li>
+                            <li>Add timestamps for videos longer than 10 minutes</li>
+                            <li>Include a clear call-to-action above the fold</li>
+                            <li>Link to related videos or playlists</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="submit" class="btn btn-primary">
+                <span class="spinner-border spinner-border-sm d-none" id="description-spinner"></span>
+                ✨ Enhance Description
+            </button>
+            <button type="button" class="btn btn-success" id="analyze-content-btn">📊 Analyze Content</button>
+            <button type="button" class="btn btn-info" id="preview-description-btn">👀 Live Preview</button>
+            <button type="button" class="btn btn-outline-warning" id="seo-check-btn">🔍 SEO Check</button>
+            <button type="button" class="btn btn-outline-secondary" id="keyword-suggest-btn">🎯 Keyword Ideas</button>
+            <button type="button" class="btn btn-outline-primary" id="trending-tags-btn">📈 Trending Tags</button>
+        </div>
+    </form>
+    
+    <!-- Live Preview Panel -->
+    <div id="live-preview-panel" class="mt-3" style="display: none;">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">📱 YouTube Preview</h6>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="preview-mode" id="desktop-preview" checked>
+                        <label class="btn btn-outline-light" for="desktop-preview">🖥️ Desktop</label>
+                        <input type="radio" class="btn-check" name="preview-mode" id="mobile-preview">
+                        <label class="btn btn-outline-light" for="mobile-preview">📱 Mobile</label>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="youtube-preview-container">
+                    <div class="border rounded p-3 bg-light">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="flex-grow-1">
+                                <div class="placeholder-glow">
+                                    <span class="placeholder col-8 placeholder-lg"></span>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <span class="placeholder-glow">
+                                        <span class="placeholder col-4"></span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">👁️ 0 views</small>
+                            </div>
+                        </div>
+                        <div class="description-preview" style="max-height: 200px; overflow-y: auto;">
+                            <div id="preview-description-content" class="text-muted">
+                                <em>Type in the description field above to see live preview...</em>
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top">
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-secondary" id="preview-char-count">0/5000</span>
+                                <span class="badge bg-info" id="preview-word-count">0 words</span>
+                                <span class="badge" id="preview-seo-score">SEO: Not analyzed</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary">
-                <span class="spinner-border spinner-border-sm d-none" id="description-spinner"></span>
-                Enhance Description
-            </button>
-            <button type="button" class="btn btn-secondary" id="analyze-content-btn">Analyze Content</button>
-            <button type="button" class="btn btn-outline-secondary" id="preview-description-btn">Quick Preview</button>
+    </div>
+
+    <!-- Keyword Suggestions Panel -->
+    <div id="keyword-suggestions-panel" class="mt-3" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">🎯 Keyword & SEO Suggestions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Trending Keywords:</h6>
+                        <div id="trending-keywords" class="d-flex flex-wrap gap-1">
+                            <span class="badge bg-primary">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Related Tags:</h6>
+                        <div id="related-tags" class="d-flex flex-wrap gap-1">
+                            <span class="badge bg-secondary">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <h6>SEO Recommendations:</h6>
+                    <ul id="seo-recommendations" class="small text-muted">
+                        <li>Analyzing content...</li>
+                    </ul>
+                </div>
+            </div>
         </div>
-    </form>
+    </div>
     
     <!-- Content Analysis -->
     <div id="content-analysis" class="mt-3" style="display: none;">

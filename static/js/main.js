@@ -7,6 +7,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadForm = document.getElementById('upload-form');
     const customThumbnailForm = document.getElementById('custom-thumbnail-form');
     const videoThumbnailForm = document.getElementById('video-thumbnail-form');
+    
+    // Initialize enhanced description features
+    initializeDescriptionEnhancements();
 
     titleForm.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -1360,4 +1363,510 @@ function getPlaylistDataForExport() {
     };
     
     return JSON.stringify(exportData, null, 2);
+}
+// Enhanced Description Features (Added July 14, 2025)
+function initializeDescriptionEnhancements() {
+    const descriptionContent = document.getElementById('description-content');
+    const videoContent = document.getElementById('video-content');
+    
+    if (descriptionContent) {
+        descriptionContent.addEventListener('input', updateDescriptionStats);
+        descriptionContent.addEventListener('input', updateLivePreview);
+    }
+    
+    if (videoContent) {
+        videoContent.addEventListener('input', updateVideoContentStats);
+    }
+    
+    // Template functionality
+    const templateBtn = document.getElementById('template-btn');
+    const templateDropdown = document.getElementById('template-dropdown');
+    
+    if (templateBtn && templateDropdown) {
+        templateBtn.addEventListener('click', () => {
+            templateDropdown.style.display = templateDropdown.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+    
+    document.querySelectorAll('.template-option').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const template = this.dataset.template;
+            applyDescriptionTemplate(template);
+            templateDropdown.style.display = 'none';
+        });
+    });
+    
+    // Import transcript functionality
+    const importTranscriptBtn = document.getElementById('import-transcript-btn');
+    if (importTranscriptBtn) {
+        importTranscriptBtn.addEventListener('click', importFromTranscript);
+    }
+    
+    // SEO suggestions
+    const seoSuggestionsBtn = document.getElementById('seo-suggestions-btn');
+    const seoSuggestionsPanel = document.getElementById('seo-suggestions-panel');
+    if (seoSuggestionsBtn && seoSuggestionsPanel) {
+        seoSuggestionsBtn.addEventListener('click', () => {
+            seoSuggestionsPanel.style.display = seoSuggestionsPanel.style.display === 'none' ? 'block' : 'none';
+        });
+    }
+    
+    // Live preview
+    const previewBtn = document.getElementById('preview-description-btn');
+    const previewPanel = document.getElementById('live-preview-panel');
+    if (previewBtn && previewPanel) {
+        previewBtn.addEventListener('click', () => {
+            previewPanel.style.display = previewPanel.style.display === 'none' ? 'block' : 'none';
+            if (previewPanel.style.display !== 'none') {
+                updateLivePreview();
+            }
+        });
+    }
+    
+    // Keyword suggestions
+    const keywordSuggestBtn = document.getElementById('keyword-suggest-btn');
+    const keywordPanel = document.getElementById('keyword-suggestions-panel');
+    if (keywordSuggestBtn && keywordPanel) {
+        keywordSuggestBtn.addEventListener('click', () => {
+            keywordPanel.style.display = keywordPanel.style.display === 'none' ? 'block' : 'none';
+            if (keywordPanel.style.display !== 'none') {
+                generateKeywordSuggestions();
+            }
+        });
+    }
+    
+    // SEO Check
+    const seoCheckBtn = document.getElementById('seo-check-btn');
+    if (seoCheckBtn) {
+        seoCheckBtn.addEventListener('click', performSEOCheck);
+    }
+    
+    // Reset options
+    const resetBtn = document.getElementById('reset-options');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetEnhancementOptions);
+    }
+}
+
+function updateDescriptionStats() {
+    const descriptionContent = document.getElementById('description-content');
+    const charCount = document.getElementById('char-count');
+    const wordCount = document.getElementById('word-count');
+    const readabilityScore = document.getElementById('readability-score');
+    
+    if (descriptionContent && charCount && wordCount) {
+        const content = descriptionContent.value;
+        const chars = content.length;
+        const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+        
+        charCount.textContent = chars;
+        wordCount.textContent = words;
+        
+        if (chars > 4500) {
+            charCount.className = 'text-danger fw-bold';
+        } else if (chars > 4000) {
+            charCount.className = 'text-warning fw-bold';
+        } else {
+            charCount.className = '';
+        }
+        
+        if (readabilityScore) {
+            const score = calculateReadabilityScore(content);
+            readabilityScore.textContent = `Readability: ${score}`;
+            readabilityScore.className = `badge ${getReadabilityClass(score)}`;
+        }
+    }
+}
+
+function updateLivePreview() {
+    const descriptionContent = document.getElementById('description-content');
+    const previewContent = document.getElementById('preview-description-content');
+    const previewCharCount = document.getElementById('preview-char-count');
+    const previewWordCount = document.getElementById('preview-word-count');
+    const previewSeoScore = document.getElementById('preview-seo-score');
+    
+    if (descriptionContent && previewContent) {
+        const content = descriptionContent.value;
+        const chars = content.length;
+        const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+        
+        if (content.trim()) {
+            previewContent.innerHTML = content.replace(/\n/g, '<br>');
+            previewContent.className = '';
+        } else {
+            previewContent.innerHTML = '<em>Type in the description field above to see live preview...</em>';
+            previewContent.className = 'text-muted';
+        }
+        
+        if (previewCharCount) previewCharCount.textContent = `${chars}/5000`;
+        if (previewWordCount) previewWordCount.textContent = `${words} words`;
+        
+        if (previewSeoScore && content.trim()) {
+            const seoScore = calculateSEOScore(content);
+            previewSeoScore.textContent = `SEO: ${seoScore}%`;
+            previewSeoScore.className = `badge ${getSEOScoreClass(seoScore)}`;
+        } else if (previewSeoScore) {
+            previewSeoScore.textContent = 'SEO: Not analyzed';
+            previewSeoScore.className = 'badge bg-secondary';
+        }
+    }
+}
+
+function applyDescriptionTemplate(templateType) {
+    const descriptionContent = document.getElementById('description-content');
+    if (!descriptionContent) return;
+    
+    const templates = {
+        tutorial: `📚 In this tutorial, you'll learn [MAIN TOPIC]
+
+🎯 What you'll discover:
+• [Key point 1]
+• [Key point 2] 
+• [Key point 3]
+
+⏱️ Timestamps:
+00:00 - Introduction
+[XX:XX] - [Chapter 1]
+[XX:XX] - [Chapter 2]
+
+🔗 Resources mentioned:
+• [Resource 1]: [Link]
+
+💡 Don't forget to subscribe for more tutorials!
+
+#Tutorial #HowTo #Learning`,
+
+        review: `⭐ Honest review of [PRODUCT NAME]
+
+📋 What I tested:
+✅ [Feature 1] - Rating: X/10
+✅ [Feature 2] - Rating: X/10
+
+💰 Price: $[PRICE]
+🏆 Overall rating: X/10
+
+👍 Pros: • [Pro 1] • [Pro 2]
+👎 Cons: • [Con 1] • [Con 2]
+
+🛒 Where to buy: [Link]
+
+#Review #ProductReview #Honest`,
+
+        gaming: `🎮 [GAME NAME] - [VIDEO DESCRIPTION]
+
+🏆 Highlights:
+• [Achievement 1]
+• [Achievement 2]
+
+⏱️ Timestamps:
+00:00 - Intro
+[XX:XX] - [Gameplay moment]
+
+Like and subscribe for more gaming content!
+
+#Gaming #[GameName] #Gameplay`,
+
+        educational: `🎓 [TOPIC] Explained Simply
+
+📚 What we cover:
+1. [Concept 1] - The basics
+2. [Concept 2] - Advanced techniques
+3. [Concept 3] - Applications
+
+📖 Additional resources:
+• [Resource 1]: [Link]
+
+Subscribe for more educational content!
+
+#Education #Learning #[Topic]`,
+
+        business: `💼 [BUSINESS TOPIC] - [DESCRIPTION]
+
+📈 What you'll learn:
+• [Business concept 1]
+• [Business concept 2]
+
+🎯 Key strategies:
+1. [Strategy 1]
+2. [Strategy 2]
+
+🔗 Tools mentioned:
+• [Tool 1]: [Link]
+
+Share your business wins in the comments!
+
+#Business #Entrepreneur #Success`,
+
+        tech: `💻 [TECHNOLOGY/CODING TOPIC]
+
+🚀 What we build:
+• [Feature 1]
+• [Feature 2]
+
+⚙️ Technologies:
+• [Tech 1] • [Tech 2]
+
+📝 Code: [GitHub link]
+
+🤝 Connect: GitHub: [Link]
+
+#Programming #Tech #Development`,
+
+        vlog: `✨ [VLOG TITLE]
+
+🌟 Today's adventure:
+• [Activity 1]
+• [Activity 2]
+
+📸 Favorite moments:
+• [Moment 1] • [Moment 2]
+
+💕 Thanks for following my journey!
+
+Like and let me know what you want to see next!
+
+#Vlog #Life #Adventure`,
+
+        entertainment: `🎬 [ENTERTAINMENT CONTENT]
+
+😂 What's in this video:
+• [Funny element 1]
+• [Funny element 2]
+
+⭐ Best moments:
+• [Timestamp] - [Description]
+
+Share with friends who need a laugh!
+
+#Entertainment #Funny #Content`,
+
+        fitness: `💪 [WORKOUT/FITNESS TOPIC]
+
+🏋️ Today's workout:
+• [Exercise 1] - [Sets/reps]
+• [Exercise 2] - [Sets/reps]
+
+⏱️ Duration: [X] minutes
+🎯 Target: [Muscle group]
+
+💪 Share your results in the comments!
+
+#Fitness #Workout #Health`
+    };
+    
+    if (templates[templateType]) {
+        descriptionContent.value = templates[templateType];
+        updateDescriptionStats();
+        updateLivePreview();
+        showToast(`Applied ${templateType} template successfully!`, 'success');
+    }
+}
+
+function importFromTranscript() {
+    const transcriptionText = document.getElementById('transcription');
+    const videoContent = document.getElementById('video-content');
+    
+    if (transcriptionText && videoContent && transcriptionText.textContent.trim()) {
+        videoContent.value = transcriptionText.textContent.trim();
+        updateVideoContentStats();
+        showToast('Transcript imported successfully!', 'success');
+    } else {
+        showToast('No transcription available. Please transcribe audio first.', 'warning');
+    }
+}
+
+function generateKeywordSuggestions() {
+    const content = document.getElementById('description-content').value + ' ' + document.getElementById('video-content').value;
+    
+    if (!content.trim()) {
+        showToast('Please enter content first to generate suggestions.', 'warning');
+        return;
+    }
+    
+    const keywords = extractKeywordsFromContent(content);
+    const tags = generateTagsFromKeywords(keywords);
+    
+    const trendingKeywordsDiv = document.getElementById('trending-keywords');
+    const relatedTagsDiv = document.getElementById('related-tags');
+    const seoRecommendationsDiv = document.getElementById('seo-recommendations');
+    
+    if (trendingKeywordsDiv) {
+        trendingKeywordsDiv.innerHTML = keywords.map(keyword => 
+            `<span class="badge bg-primary me-1 mb-1" style="cursor: pointer;" onclick="addToDescription('${keyword}')">${keyword}</span>`
+        ).join('');
+    }
+    
+    if (relatedTagsDiv) {
+        relatedTagsDiv.innerHTML = tags.map(tag => 
+            `<span class="badge bg-secondary me-1 mb-1" style="cursor: pointer;" onclick="addToDescription('#${tag}')">#${tag}</span>`
+        ).join('');
+    }
+    
+    if (seoRecommendationsDiv) {
+        const recommendations = generateSEORecommendations(content);
+        seoRecommendationsDiv.innerHTML = recommendations.map(rec => `<li>${rec}</li>`).join('');
+    }
+}
+
+function performSEOCheck() {
+    const content = document.getElementById('description-content').value;
+    
+    if (!content.trim()) {
+        showToast('Please enter a description first.', 'warning');
+        return;
+    }
+    
+    const seoScore = calculateSEOScore(content);
+    const recommendations = generateSEORecommendations(content);
+    
+    showToast(`SEO Score: ${seoScore}%. Check recommendations for improvements.`, 'info');
+    
+    const recommendationText = recommendations.join('\n• ');
+    alert(`SEO Analysis Results:\n\nScore: ${seoScore}%\n\nRecommendations:\n• ${recommendationText}`);
+}
+
+function resetEnhancementOptions() {
+    document.getElementById('target-audience').value = 'general';
+    document.getElementById('video-category').value = 'general';
+    document.getElementById('description-length').value = 'medium';
+    document.getElementById('writing-tone').value = 'friendly';
+    
+    const checkboxes = ['include-seo', 'include-hashtags', 'include-cta', 'include-social'];
+    checkboxes.forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (checkbox) checkbox.checked = true;
+    });
+    
+    const advancedCheckboxes = ['include-timestamps', 'include-chapters', 'include-resources', 'include-emojis'];
+    advancedCheckboxes.forEach(id => {
+        const checkbox = document.getElementById(id);
+        if (checkbox) checkbox.checked = false;
+    });
+    
+    showToast('Options reset to defaults.', 'success');
+}
+
+// Helper functions
+function updateVideoContentStats() {}
+
+function calculateReadabilityScore(text) {
+    if (!text.trim()) return 'Good';
+    
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const words = text.trim().split(/\s+/);
+    const avgWordsPerSentence = words.length / sentences.length;
+    
+    if (avgWordsPerSentence < 15) return 'Excellent';
+    if (avgWordsPerSentence < 20) return 'Good';
+    if (avgWordsPerSentence < 25) return 'Fair';
+    return 'Complex';
+}
+
+function getReadabilityClass(score) {
+    const classes = {'Excellent': 'bg-success', 'Good': 'bg-info', 'Fair': 'bg-warning', 'Complex': 'bg-danger'};
+    return classes[score] || 'bg-secondary';
+}
+
+function calculateSEOScore(content) {
+    let score = 0;
+    
+    const words = content.trim().split(/\s+/).length;
+    if (words >= 200 && words <= 300) score += 25;
+    else if (words >= 150) score += 15;
+    
+    const hashtags = (content.match(/#\w+/g) || []).length;
+    if (hashtags >= 3 && hashtags <= 5) score += 20;
+    else if (hashtags > 0) score += 10;
+    
+    const ctaWords = ['subscribe', 'like', 'comment', 'share', 'click', 'watch', 'follow'];
+    const hasCTA = ctaWords.some(word => content.toLowerCase().includes(word));
+    if (hasCTA) score += 20;
+    
+    const hasTimestamps = /\d{1,2}:\d{2}/.test(content);
+    if (hasTimestamps) score += 15;
+    
+    const hasLinks = /https?:\/\//.test(content);
+    if (hasLinks) score += 10;
+    
+    const emojiCount = (content.match(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F700}-\u{1F77F}]|[\u{1F780}-\u{1F7FF}]|[\u{1F800}-\u{1F8FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu) || []).length;
+    if (emojiCount >= 3 && emojiCount <= 10) score += 10;
+    
+    return Math.min(score, 100);
+}
+
+function getSEOScoreClass(score) {
+    if (score >= 80) return 'bg-success';
+    if (score >= 60) return 'bg-warning';
+    if (score >= 40) return 'bg-orange';
+    return 'bg-danger';
+}
+
+function extractKeywordsFromContent(content) {
+    const words = content.toLowerCase().replace(/[^\w\s]/g, '').split(/\s+/);
+    const stopWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'this', 'that', 'these', 'those']);
+    
+    const filtered = words.filter(word => word.length > 3 && !stopWords.has(word));
+    const frequency = {};
+    
+    filtered.forEach(word => {
+        frequency[word] = (frequency[word] || 0) + 1;
+    });
+    
+    return Object.entries(frequency)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 8)
+        .map(([word]) => word);
+}
+
+function generateTagsFromKeywords(keywords) {
+    const tags = [];
+    keywords.forEach(keyword => {
+        tags.push(keyword);
+        if (keyword.includes('ing')) {
+            tags.push(keyword.replace('ing', ''));
+        }
+    });
+    return [...new Set(tags)].slice(0, 10);
+}
+
+function generateSEORecommendations(content) {
+    const recommendations = [];
+    const words = content.trim().split(/\s+/).length;
+    const hashtags = (content.match(/#\w+/g) || []).length;
+    
+    if (words < 150) recommendations.push('Add more detail to reach 150-300 words for better SEO');
+    if (words > 400) recommendations.push('Consider shortening to under 400 words for better readability');
+    if (hashtags < 3) recommendations.push('Add 3-5 relevant hashtags to improve discoverability');
+    if (hashtags > 5) recommendations.push('Reduce hashtags to 3-5 to avoid spam appearance');
+    if (!content.toLowerCase().includes('subscribe')) recommendations.push('Include a call-to-action like "subscribe"');
+    if (!/\d{1,2}:\d{2}/.test(content)) recommendations.push('Add timestamps for longer videos');
+    
+    return recommendations.length > 0 ? recommendations : ['Your description looks good!'];
+}
+
+function addToDescription(text) {
+    const descriptionContent = document.getElementById('description-content');
+    if (descriptionContent) {
+        const currentValue = descriptionContent.value;
+        const newValue = currentValue + (currentValue ? ' ' : '') + text;
+        descriptionContent.value = newValue;
+        updateDescriptionStats();
+        updateLivePreview();
+        showToast(`Added "${text}" to description`, 'success');
+    }
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    }, 3000);
 }
