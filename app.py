@@ -26,6 +26,14 @@ with app.app_context():
 def index():
     return render_template('index.html')
 
+@app.route('/manual')
+def manual():
+    return render_template('manual.html')
+
+@app.route('/PRODUCT_MANUAL.md')
+def download_manual():
+    return app.send_static_file('../PRODUCT_MANUAL.md')
+
 @app.route('/generate_title', methods=['POST'])
 def generate_title_route():
     try:
