@@ -431,15 +431,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Title Generation helper functions
 function showTitleLoading(isLoading) {
-    const spinner = document.getElementById('title-spinner');
     const submitBtn = document.querySelector('#title-form button[type="submit"]');
     
     if (isLoading) {
-        spinner.style.display = 'inline-block';
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating Titles...';
     } else {
-        spinner.style.display = 'none';
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" id="title-spinner" style="display: none;"></span>Generate Titles';
     }
